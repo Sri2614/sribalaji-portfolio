@@ -3,18 +3,16 @@
 window.CONTENT = {
   name: "Sri Balaji",
   role: "Senior Cloud & Platform Engineer · Kubernetes · DevSecOps",
-  tagline: "I run the Kubernetes platforms that banking product teams ship on, and build security into delivery instead of bolting it on afterwards. Alongside that, I’ve taught cloud and DevOps to 50,000+ students.",
+  tagline: "I design and run the platforms regulated banks build on: secure-by-default Kubernetes, delivery pipelines that satisfy auditors, and the guardrails that let many product teams ship safely. I lead modernisation programmes and advise banks on their cloud strategy.",
   location: "Almere, Netherlands",
   timeZone: "Europe/Amsterdam",
-  availability: "Open to roles in the Netherlands · on-site or hybrid",
+  availability: "Open to senior, staff & principal platform roles · Netherlands",
   email: "sribalaji2614@gmail.com",
   photo: "photo.jpg",
   cv: null, // e.g. "SriBalaji-CV.pdf": set a file name to show Download CV buttons
   links: [
     { label: "LinkedIn", url: "https://linkedin.com/in/sribalaji2604" },
     { label: "GitHub", url: "https://github.com/Sri2614" },
-    { label: "TheSimplifiedTech", url: "https://thesimplifiedtech.com" },
-    // { label: "Udemy", url: "https://www.udemy.com/user/your-username/" },
   ],
 
   // Shown as a Kubernetes-style manifest in the hero.
@@ -27,6 +25,7 @@ window.CONTENT = {
     "spec:",
     "  experience: 7y+",
     "  domain: regulated-banking",
+    "  scope: [platform-strategy, modernisation, advisory]",
     "  platforms: [aks, eks, openshift]",
     "  delivery: [terraform, gitops, argocd]",
     "  security: [policy-as-code, entra-id, rbac]",
@@ -37,32 +36,33 @@ window.CONTENT = {
 
   stats: [
     { value: "7+", label: "years building cloud platforms" },
-    { value: "50k+", label: "students taught on Udemy" },
+    { value: "11", label: "industry certifications" },
     { value: "AKS + EKS", label: "Kubernetes platforms I run in production" },
   ],
 
-  about: [
-    "Senior cloud and platform engineer with over seven years of experience, currently in regulated digital banking at Backbase. I lead application modernisation programmes, own the CI/CD platform product teams release through, and advise enterprise banking clients on their AWS and Azure strategy.",
-    "My focus is platforms that are fast for developers and boring for auditors: Kubernetes on AKS and EKS, everything defined in Terraform and Git, and security checks that run as pipeline gates rather than as a pre-release scramble.",
-    "Outside client work I teach. I founded TheSimplifiedTech, where cloud and DevOps are learned through hands-on labs rather than lectures, and I run workshops for engineering chapters on Kubernetes security, identity and DevSecOps.",
-  ],
-  facts: [
-    { k: "Based in", v: "Almere, Netherlands" },
-    { k: "Work authorisation", v: "Dutch highly skilled migrant permit, transferable to a recognised sponsor" },
-    { k: "Languages", v: "English (professional) · Dutch (A2, actively learning) · Tamil (native)" },
-    { k: "Education", v: "B.Tech, Information Technology · Jeppiaar Engineering College" },
-  ],
-
-  // Short Dutch intro shown in About. Kept simple on purpose (A2 and learning).
-  dutch: {
-    title: "In het Nederlands",
-    text: "Ik ben een senior cloud- en platformengineer met meer dan zeven jaar ervaring. Bij Backbase bouw en beheer ik Kubernetes-platformen voor digitale banken. Ik automatiseer alles met Terraform en GitOps, en bouw beveiliging vanaf het begin in de pipeline in. Ik woon in Almere en leer actief Nederlands.",
+  // About. **double asterisks** mark phrases highlighted in the lede.
+  about: {
+    lede: "I’m a senior cloud and platform engineer with over seven years in cloud, currently at **Backbase**, where digital banking runs under strict regulation. My work sits where engineering meets risk: I lead **application modernisation programmes** for banks across multiple markets, own the **delivery platform** product teams release through, and advise enterprise clients on their **AWS and Azure strategy**.",
+    notes: [
+      { k: "How I think", text: "I think in systems, not tickets. A good platform is fast for developers and boring for auditors: Kubernetes on AKS and EKS, every environment defined in Terraform and Git, and security enforced as pipeline gates rather than a scramble before release." },
+      { k: "Growing engineers", text: "I invest in making other engineers better: I run workshops for engineering chapters on Kubernetes security, identity with Entra ID and ArgoCD, and DevSecOps, and I support client teams with training as they adopt the platform." },
+    ],
   },
+  facts: [
+    { k: "Based in", v: "Almere, Netherlands", icon: "pin", clock: true },
+    { k: "Work authorisation", v: "Dutch highly skilled migrant permit", icon: "shield", badge: "Transferable to a recognised sponsor" },
+    { k: "Languages", icon: "chat", langs: [
+      { name: "English", level: "Professional" },
+      { name: "Dutch", level: "A2 · actively learning", cefr: 2 },
+      { name: "Tamil", level: "Native" },
+    ] },
+    { k: "Education", v: "B.Tech, Information Technology", sub: "Jeppiaar Engineering College", icon: "cap" },
+  ],
 
   // How I work: principles, each tied to something I actually do (see the CV).
   principles: [
     { title: "Security is a pipeline stage, not an audit.", desc: "SAST, DAST and IaC scanning run as policy-as-code gates, so compliance is continuous instead of a scramble before release." },
-    { title: "Platforms are products.", desc: "Product teams get self-service delivery through GitOps and Helm, rather than filing tickets with an infrastructure team." },
+    { title: "Platforms are products.", desc: "Product teams are my customers: they get self-service delivery through GitOps and Helm, not a ticket queue to an infrastructure team." },
     { title: "Everything as code.", desc: "Environments, policies and access live in Terraform and Git, so every change is reviewable, repeatable and auditable." },
     { title: "Alert on what users feel.", desc: "SLO-based dashboards and alerting keep on-call attention on what actually affects customers, which shortens time to resolution." },
   ],
@@ -112,46 +112,54 @@ window.CONTENT = {
     },
   ],
 
-  // Public work anyone can open: the platform I founded.
-  publicWork: [
-    { title: "Hands-on labs", desc: "Guided, browser-based terminal labs for Docker, Kubernetes, Helm, Terraform and more.", url: "https://thesimplifiedtech.com/labs" },
-    { title: "Capstone projects", desc: "Progressive projects that take one app from beginner to production-grade.", url: "https://thesimplifiedtech.com/capstones" },
-    { title: "Career paths", desc: "Structured learning paths for cloud and DevOps roles.", url: "https://thesimplifiedtech.com/career-paths" },
-    { title: "Blog", desc: "Articles on cloud and DevOps, written for engineers who are starting out.", url: "https://thesimplifiedtech.com/blog" },
-  ],
   workshops: [
-    { title: "Azure AD + ArgoCD ApplicationSets on AWS EKS", where: "Amsterdam System Engineering Chapter" },
-    { title: "Microsoft Azure fundamentals for front-end engineers", where: "Front End Chapter" },
-    { title: "Container security, Kubernetes security & DevSecOps", where: "Internal workshops" },
+    { type: "Workshop", icon: "terminal", title: "Integrating Azure AD with ArgoCD ApplicationSets on AWS EKS",
+      where: "Amsterdam System Engineering Chapter",
+      desc: "Hands-on session on identity and permission management, and on secure, automated CI/CD delivery.",
+      tags: ["ArgoCD", "Azure AD", "AWS EKS"] },
+    { type: "Talk", icon: "mic", title: "Microsoft Azure fundamentals for front-end engineers",
+      where: "Front End Chapter",
+      desc: "Cloud computing models, App Services, Functions and Storage, and how front-end applications integrate with them.",
+      tags: ["Azure", "App Services", "Functions"] },
+    { type: "Workshop series", icon: "layers", title: "Container security, Kubernetes security & DevSecOps",
+      where: "Internal engineering teams",
+      desc: "Internal workshops on securing containers and clusters, and on building security into the delivery pipeline.",
+      tags: ["Containers", "Kubernetes", "DevSecOps"] },
   ],
 
   // LinkedIn recommendations, with each person's permission. The block stays hidden while empty.
   // { quote: "...", name: "Jane de Vries", role: "Engineering Manager, Company" }
   testimonials: [],
 
+  // Every line maps to a bullet on the CV. `themes` groups a role's work by area of responsibility.
   experience: [
     {
       role: "Senior Systems Engineer, Cloud/DevOps, Security & Consulting",
       company: "Backbase",
       period: "Oct 2022 – Present",
       meta: "Amsterdam · Digital banking platform (regulated fintech)",
+      summary: "Senior engineer across platform, security and client advisory for a regulated digital-banking platform, working with banks across multiple markets.",
       stack: ["AKS", "EKS", "ArgoCD", "Azure DevOps", "Terraform", "Entra ID"],
-      points: [
-        "Lead application modernisation programmes for banking clients across multiple markets, moving legacy services onto cloud-native microservices on AKS and EKS.",
-        "Own the Azure DevOps CI/CD platform: security-gated pipelines and GitOps releases through ArgoCD, with Entra ID enforcing least-privilege access.",
-        "Deploy and customise Backbase’s retail banking product on clients’ on-premises infrastructure, with ongoing support and training for adoption.",
-        "Advise enterprise banking clients on AWS and Azure adoption, and run workshops on Kubernetes security and DevSecOps.",
-      ],
-    },
-    {
-      role: "Founder & Instructor",
-      company: "TheSimplifiedTech",
-      url: "https://thesimplifiedtech.com",
-      period: "Alongside",
-      meta: "Independent · Cloud & DevOps education",
-      stack: ["Kubernetes", "Terraform", "CI/CD", "Multi-cloud"],
-      points: [
-        "Teach cloud and DevOps through hands-on labs rather than lectures: over 50,000 students on Udemy, covering Kubernetes, Terraform, CI/CD and multi-cloud architecture.",
+      themes: [
+        { title: "Strategy & advisory", points: [
+          "Lead application modernisation programmes for banks across multiple markets, taking legacy services to cloud-native microservices on AKS and EKS with Spring Boot, Docker and Helm.",
+          "Advise enterprise banking clients on AWS and Azure adoption and their cloud strategy.",
+          "Prove out where the platform goes next: built proofs of concept integrating ArgoCD GitOps with Azure AD and ApplicationSets, demonstrating stronger security and simpler access management inside CI/CD.",
+        ] },
+        { title: "Platform & delivery", points: [
+          "Own the delivery platform in Azure DevOps: multi-stage pipelines with SAST and DAST gates and GitOps releases to AKS through ArgoCD, shortening release cycles.",
+          "Provision every environment as code through Terraform and ARM templates, with secrets managed in Azure Key Vault.",
+          "Build event-driven services on Azure Functions, Service Bus and Event Grid for asynchronous and background workloads.",
+        ] },
+        { title: "Security & compliance", points: [
+          "Design secure AWS landing zones with WAF, Security Hub, GuardDuty, Inspector and Macie, automating AWS Config and Control Tower for continuous compliance against banking audit requirements.",
+          "Integrate Entra ID with AKS and ArgoCD to enforce least-privilege, role-based access across the delivery chain.",
+          "Harden Kubernetes workloads with pod security standards, network policies and RBAC.",
+        ] },
+        { title: "Reliability & client delivery", points: [
+          "Run observability end to end with Azure Monitor, Log Analytics and Application Insights, using SLO-based dashboards and custom alerting to shorten time to resolution.",
+          "Deliver Backbase’s retail banking product on clients’ own infrastructure, customising and integrating it with their existing systems, with ongoing support and training for adoption.",
+        ] },
       ],
     },
     {
@@ -159,11 +167,14 @@ window.CONTENT = {
       company: "SecureKloud Technologies",
       period: "Feb 2021 – Sep 2022",
       meta: "India · Cloud consultancy",
+      summary: "Designed and delivered AWS migrations and secure-by-default foundations for enterprise clients.",
       stack: ["AWS", "Terraform", "GitLab CI", "KMS"],
       points: [
-        "Designed AWS migration architectures and delivered migrations for enterprise clients.",
-        "Built a secure-by-default Terraform module library for EKS, RDS and Lambda, adopted across delivery teams.",
-        "Designed IAM, Secrets Manager and KMS policies and brought security scanning into GitLab CI before release.",
+        "Assessed enterprise workloads and designed best-fit AWS migration architectures, then delivered the migrations.",
+        "Built a reusable Terraform module library for EKS, RDS and Lambda with security controls baked in, adopted across delivery teams.",
+        "Implemented AWS WAF, GuardDuty and Security Hub, and designed IAM, Secrets Manager and KMS policies for authentication and encryption at rest and in transit.",
+        "Built GitLab CI/CD pipelines with integrated security scanning, enforcing compliance before release.",
+        "Configured CloudWatch and AWS Config for proactive monitoring and security auditing.",
       ],
     },
     {
@@ -171,10 +182,13 @@ window.CONTENT = {
       company: "Revature",
       period: "Apr 2019 – Feb 2021",
       meta: "India",
+      summary: "Where it started: cloud-native applications, AWS security and my first Kubernetes clusters.",
       stack: ["Java", "Spring Boot", "AWS", "Kops", "Docker"],
       points: [
-        "Built cloud-native Java and Spring Boot applications on AWS for clients.",
-        "Secured AWS deployments and Kubernetes clusters (Kops, eksctl, Helm), with Terraform and hardened Docker builds.",
+        "Developed cloud-native applications for clients using Java, Spring Boot and AWS services.",
+        "Managed secure AWS deployments, including IAM policies, VPC security groups and CloudTrail logging.",
+        "Secured Kubernetes clusters using Kops and eksctl, integrating Helm for streamlined deployments.",
+        "Wrote Terraform templates and applied Docker security practices for secure image builds and vulnerability scanning.",
       ],
     },
   ],
@@ -185,30 +199,43 @@ window.CONTENT = {
     { key: "bb", name: "Backbase", year: 2022 },
     { key: "sk", name: "SecureKloud", year: 2021 },
     { key: "rv", name: "Revature", year: 2019 },
-    { key: "ts", name: "Teaching", year: null },
   ],
   capabilities: [
-    { id: "k8s", name: "Kubernetes platforms", tools: "AKS · EKS · OpenShift · Helm · Docker", roles: ["bb", "sk", "rv", "ts"],
+    { id: "k8s", name: "Kubernetes platforms", tools: "AKS · EKS · OpenShift · Helm · Docker", roles: ["bb", "sk", "rv"],
       evidence: "Run AKS and EKS platforms for banking product teams; hardened clusters with pod security, network policies and RBAC.",
       highlight: "From securing clusters with Kops to running AKS and EKS for banks." },
-    { id: "iac", name: "Infrastructure as Code", tools: "Terraform · ARM templates · CloudFormation · Pulumi", roles: ["bb", "sk", "rv", "ts"],
+    { id: "iac", name: "Infrastructure as Code", tools: "Terraform · ARM templates · CloudFormation · Pulumi", roles: ["bb", "sk", "rv"],
       evidence: "Every environment defined as code; built a secure-by-default Terraform module library." },
-    { id: "gitops", name: "GitOps & CI/CD", tools: "Azure DevOps · ArgoCD · GitLab CI · GitHub Actions", roles: ["bb", "sk", "ts"],
+    { id: "gitops", name: "GitOps & CI/CD", tools: "Azure DevOps · ArgoCD · GitLab CI · GitHub Actions", roles: ["bb", "sk"],
       evidence: "Own the Azure DevOps platform with security gates and GitOps releases through ArgoCD." },
     { id: "sec", name: "Cloud security & compliance", tools: "Entra ID · RBAC · SAST/DAST · policy-as-code · WAF · GuardDuty · Security Hub · KMS · Vault", roles: ["bb", "sk", "rv"],
       evidence: "Security as pipeline gates; AWS landing zones with continuous compliance for banking audits." },
     { id: "obs", name: "Observability", tools: "Azure Monitor · App Insights · Prometheus · Grafana · CloudWatch", roles: ["bb", "sk"],
       evidence: "SLO-based dashboards and alerting that shorten time to resolution." },
-    { id: "cloud", name: "Cloud architecture", tools: "Azure · AWS · landing zones · hybrid / on-prem", roles: ["bb", "sk", "ts"],
+    { id: "cloud", name: "Cloud architecture", tools: "Azure · AWS · landing zones · hybrid / on-prem", roles: ["bb", "sk"],
       evidence: "AWS migration architectures, landing zones, and banking deployments on clients’ own infrastructure." },
     { id: "apps", name: "Application platforms", tools: "Spring Boot · Azure Functions · Service Bus · Event Grid · Lambda", roles: ["bb", "sk", "rv"],
       evidence: "Cloud-native Java services and event-driven processing." },
   ],
 
-  // Associate-level and above only. Foundational certs stay on the CV.
+  // Every certification on the CV, grouped so the strongest lead. `year` only where the CV states one.
   certifications: [
-    { issuer: "AWS", name: "Solutions Architect – Associate" },
-    { issuer: "AWS", name: "Developer – Associate" },
-    { issuer: "HashiCorp", name: "Terraform Associate" },
+    { group: "Cloud & platform", items: [
+      { issuer: "AWS", name: "Solutions Architect – Associate", short: "Solutions Architect", tier: "Associate" },
+      { issuer: "AWS", name: "Developer – Associate", short: "Developer", tier: "Associate" },
+      { issuer: "HashiCorp", name: "Terraform Associate", short: "Terraform", tier: "Associate" },
+      { issuer: "CNCF", name: "Kubernetes and Cloud Native Associate (KCNA)", short: "Kubernetes & Cloud Native", tier: "KCNA" },
+    ] },
+    { group: "AI engineering", items: [
+      { issuer: "Anthropic", name: "Claude Code in Action", tier: "2026", year: 2026 },
+      { issuer: "Anthropic", name: "Claude Code 101", tier: "2026", year: 2026 },
+      { issuer: "LinkedIn", name: "AI Evaluations for Product Leaders and AI PMs", short: "AI Evaluations", tier: "2026", year: 2026 },
+      { issuer: "LinkedIn", name: "Prompt Engineering: How to Talk to the AIs", short: "Prompt Engineering", tier: "2026", year: 2026 },
+    ] },
+    { group: "Foundations", items: [
+      { issuer: "Microsoft", name: "Azure Fundamentals", short: "Azure", tier: "Fundamentals" },
+      { issuer: "Microsoft", name: "Azure Data Fundamentals", short: "Azure Data", tier: "Fundamentals" },
+      { issuer: "Oracle", name: "Oracle Cloud Infrastructure Foundations Associate", short: "OCI Foundations", tier: "2020", year: 2020 },
+    ] },
   ],
 };
