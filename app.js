@@ -567,6 +567,7 @@
     var name = f.name.value.trim();
     var topic = (f.querySelector('input[name="topic"]:checked') || {}).value || "Hello";
     out.textContent = "✓ Opening your email app with the message ready to send.";
+    track("contact-form-sent", "Contact form: " + topic);
     f.classList.add("sent");
     var subject = topic + " · from " + name;
     var body = f.message.value.trim() + "\n\n— " + name + " (" + f.email.value.trim() + ")";
@@ -796,4 +797,101 @@
     else if (e.key === "/" && !typing && !palette.open) { e.preventDefault(); openPalette(); }
     else if (e.key === "Escape" && !menu.hidden) { setMenu(false); menuBtn.focus(); }
   });
+
+  // ---------- Visitor analytics (cookieless, GoatCounter) ----------
+  // Counts only real people: the page's JavaScript must run (most bots never do), the browser must not be
+  // automated, and the visitor must stay 5 s with the tab visible, scroll, or interact before anything is sent.
+  // Links like ?ref=adyen show up in GoatCounter as the referrer "adyen", so you can see which application was opened.
+  // Open the site once with ?me=1 to stop counting your own visits on that device (?me=0 undoes it).
+  var gc = { on: false, human: false, sent: {}, queue: [] };
+  function track(name, title) {
+    if (!gc.on) return;
+    if (!gc.human) { gc.queue.push([name, title]); return; }
+    if (gc.sent[name]) return;
+    gc.sent[name] = true;
+    var data = {
+      p: name ? name : location.pathname.replace(/\/?$/, "/"),
+      t: title || document.title,
+      e: name ? "true" : "false",
+      r: gc.ref || document.referrer,
+      q: location.search,
+      s: [screen.width, screen.height, window.devicePixelRatio || 1].join(","),
+      rnd: Math.random().toString(36).slice(2),
+    };
+    var url = "https://" + c.goatcounter + ".goatcounter.com/count?" + Object.keys(data).map(function (k) {
+      return k + "=" + encodeURIComponent(data[k]);
+    }).join("&");
+    if (gc.debug) { console.info("[analytics]", name || "pageview", data); return; }
+    if (!(navigator.sendBeacon && navigator.sendBeacon(url))) new Image().src = url;
+  }
+  (function () {
+    var params = new URLSearchParams(location.search);
+    try {
+      if (params.get("me") === "1") { localStorage.setItem("no-analytics", "1"); toast("Your visits are no longer counted on this device"); }
+      if (params.get("me") === "0") { localStorage.removeItem("no-analytics"); toast("Your visits are counted again on this device"); }
+      if (localStorage.getItem("no-analytics")) return;
+    } catch (e) {}
+    if (!c.goatcounter) return;
+    if (navigator.webdriver || /bot|crawl|spider|slurp|headless|lighthouse|preview|facebookexternalhit|embedly|whatsapp|telegram|discord|skype/i.test(navigator.userAgent)) return;
+    gc.debug = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    gc.ref = (params.get("ref") || params.get("utm_source") || "").trim().toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 40);
+    gc.on = true;
+
+    // Human gate: 5 s of visible time, a real scroll, or any interaction.
+    var visibleMs = 0, since = document.visibilityState === "visible" ? Date.now() : null, timer = null;
+    function becomeHuman() {
+      if (gc.human) return;
+      gc.human = true;
+      clearInterval(timer);
+      ["scroll", "pointerdown", "keydown"].forEach(function (ev) { removeEventListener(ev, onInteract, true); });
+      track("", "");
+      gc.queue.splice(0).forEach(function (a) { track(a[0], a[1]); });
+    }
+    function onInteract(e) { if (e.isTrusted && (e.type !== "scroll" || scrollY > 200)) becomeHuman(); }
+    ["scroll", "pointerdown", "keydown"].forEach(function (ev) { addEventListener(ev, onInteract, { capture: true, passive: true }); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") since = Date.now();
+      else if (since) { visibleMs += Date.now() - since; since = null; }
+    });
+    timer = setInterval(function () {
+      if (visibleMs + (since ? Date.now() - since : 0) >= 5000) becomeHuman();
+    }, 1000);
+
+    // Which sections were actually read: occupying the middle of the screen for 2 s (works for tall sections too).
+    if ("IntersectionObserver" in window) {
+      var timers = {};
+      var readIo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          var id = en.target.id;
+          if (en.isIntersecting) {
+            timers[id] = setTimeout(function () {
+              var h = en.target.querySelector("h2");
+              track("read-" + id, "Read: " + (h ? h.textContent : id));
+              readIo.unobserve(en.target);
+            }, 2000);
+          } else clearTimeout(timers[id]);
+        });
+      }, { rootMargin: "-40% 0px -40% 0px" });
+      ["about", "work", "experience", "skills", "contact"].forEach(function (id) { readIo.observe($(id)); });
+    }
+
+    // Time on page milestones (visible time only).
+    [[60000, "stayed-1-min", "Stayed 1+ min"], [180000, "stayed-3-min", "Stayed 3+ min"]].forEach(function (m) {
+      var check = setInterval(function () {
+        if (visibleMs + (since ? Date.now() - since : 0) >= m[0]) { track(m[1], m[2]); clearInterval(check); }
+      }, 5000);
+    });
+
+    // Contact intent: email, LinkedIn, GitHub clicks and copying the email address.
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("a[href]");
+      if (a) {
+        var href = a.getAttribute("href");
+        if (/^mailto:/.test(href)) track("click-email", "Clicked: email");
+        else if (/linkedin\.com/.test(href)) track("click-linkedin", "Clicked: LinkedIn");
+        else if (/github\.com/.test(href)) track("click-github", "Clicked: GitHub");
+      }
+      if (e.target.closest && e.target.closest("#copy-email")) track("copy-email", "Copied email address");
+    }, true);
+  })();
 })();

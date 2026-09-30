@@ -10,6 +10,10 @@ window.CONTENT = {
   email: "sribalaji2614@gmail.com",
   photo: "photo.jpg",
   cv: null, // e.g. "SriBalaji-CV.pdf": set a file name to show Download CV buttons
+
+  // Visitor analytics (cookieless, via GoatCounter). Put your GoatCounter code here, e.g. "sribalaji"
+  // for https://sribalaji.goatcounter.com. null = no analytics at all.
+  goatcounter: "sribalaji",
   links: [
     { label: "LinkedIn", url: "https://linkedin.com/in/sribalaji2604" },
     { label: "GitHub", url: "https://github.com/Sri2614" },
