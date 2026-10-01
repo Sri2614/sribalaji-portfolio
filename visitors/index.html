@@ -211,7 +211,6 @@
   var SITE = "sribalaji";
   var API = "https://" + SITE + ".goatcounter.com/api/v0";
   var PORTFOLIO = "https://sri2614.github.io/sribalaji-portfolio/";
-  var TZ = "Europe/Amsterdam";
   var SESSION_GAP = 45 * 60 * 1000;
   var KEEP_DAYS = 400;
   var DEMO = new URLSearchParams(location.search).has("demo");
@@ -225,9 +224,9 @@
   };
   var INTENT = ["click-email", "click-linkedin", "copy-email", "contact-form-sent"];
   var regionNames = typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
-  var fmtWhen = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  var fmtTime = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
-  var fmtDate = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, day: "2-digit", month: "short" });
+  var fmtWhen = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  var fmtTime = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
+  var fmtDate = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short" });
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
@@ -241,6 +240,10 @@
   // ---------- state ----------
   var people = DEMO ? demoPeople() : JSON.parse(store("gc-people") || "[]");
   var cache = DEMO ? { rows: demoRows(), lastHitId: 0, updated: Date.now() } : JSON.parse(store("gc-cache") || '{"rows":[],"lastHitId":0,"updated":0}');
+  // GoatCounter allows one export per hour per site; remember when the next one is allowed.
+  var EXPORT_EVERY = 60 * 60 * 1000;
+  function nextAt() { return +(store("gc-next-export") || 0); }
+  function setNextAt(t) { store("gc-next-export", String(t)); }
   var filter = "all";
   function savePeople() { if (!DEMO) store("gc-people", JSON.stringify(people)); }
   function saveCache() {
@@ -260,7 +263,17 @@
     }).then(function (r) {
       if (r.status === 401) throw new Error("That API key isn't valid (or was deleted).");
       if (r.status === 403) throw new Error("This key needs the Export permission in GoatCounter.");
-      if (!r.ok) return r.text().then(function (t) { throw new Error("GoatCounter said: " + (t || r.status)); });
+      if (r.status === 429) {
+        var wait = +(r.headers.get("Retry-After") || 3600);
+        setNextAt(Date.now() + wait * 1000);
+        var e429 = new Error("GoatCounter allows one data export per hour. Next update at " + fmtTime.format(nextAt()) + ".");
+        e429.rateLimited = true;
+        throw e429;
+      }
+      if (!r.ok) return r.text().then(function (t) {
+        var m = t; try { m = JSON.parse(t).error || t; } catch (x) {}
+        throw new Error("GoatCounter said: " + (m || r.status));
+      });
       return r;
     });
   }
@@ -272,12 +285,39 @@
     }
     return Promise.resolve(new TextDecoder().decode(buf));
   }
-  function fetchNewRows() {
+  function startExport() {
+    var pending = store("gc-pending-export");
+    if (pending) return Promise.resolve({ id: pending });
+    if (Date.now() < nextAt()) {
+      var e = new Error("GoatCounter allows one data export per hour. Next update at " + fmtTime.format(nextAt()) + ".");
+      e.rateLimited = true;
+      return Promise.reject(e);
+    }
     var body = cache.lastHitId ? { start_from_hit_id: cache.lastHitId } : {};
     return api("POST", "/export", body).then(function (r) { return r.json(); }).then(function (exp) {
+      setNextAt(Date.now() + EXPORT_EVERY);
+      store("gc-pending-export", String(exp.id));
+      return exp;
+    }, function (err) {
+      // When the hourly export is used up, GoatCounter also rejects the browser's CORS check,
+      // which surfaces only as "Failed to fetch".
+      if (err instanceof TypeError) {
+        if (nextAt() < Date.now()) setNextAt(Date.now() + EXPORT_EVERY);
+        var e = new Error("GoatCounter allows one data export per hour and it was used recently. Try again after " + fmtTime.format(nextAt()) + ".");
+        e.rateLimited = true;
+        throw e;
+      }
+      throw err;
+    });
+  }
+  function fetchNewRows() {
+    return startExport().then(function (exp) {
       var tries = 0;
       function poll() {
-        return api("GET", "/export/" + exp.id).then(function (r) { return r.json(); }).then(function (s) {
+        return api("GET", "/export/" + exp.id).catch(function (err) {
+          if (/404|not found/i.test(err.message)) store("gc-pending-export", null);
+          throw err;
+        }).then(function (r) { return r.json(); }).then(function (s) {
           if (s.finished_at) return s;
           if (++tries > 40) throw new Error("GoatCounter's export is taking long. Try Refresh in a minute.");
           return sleep(1500).then(poll);
@@ -288,7 +328,10 @@
       return api("GET", "/export/" + done.id + "/download")
         .then(function (r) { return r.arrayBuffer(); })
         .then(gunzipIfNeeded)
-        .then(function (text) { return { rows: parseCsv(text), lastHitId: done.last_hit_id || cache.lastHitId }; });
+        .then(function (text) {
+          store("gc-pending-export", null);
+          return { rows: parseCsv(text), lastHitId: done.last_hit_id || cache.lastHitId };
+        });
     });
   }
 
@@ -390,7 +433,7 @@
     var box = $("visits"); box.textContent = "";
     if (!list.length) {
       box.appendChild(el("div", "empty card", cache.rows.length ? "No visits match this filter in this period." :
-        "No visit data yet. Make sure Individual pageviews is on in GoatCounter, then press Refresh."));
+        "No visit data yet. Make sure Individual pageviews is on in GoatCounter. Data updates at most once an hour."));
       return;
     }
     list.forEach(function (v) {
@@ -454,7 +497,10 @@
     });
   }
   function renderStatus(msg) {
-    $("status-line").textContent = msg || (cache.updated ? "Updated " + fmtWhen.format(cache.updated) + " · " + cache.rows.length + " records" : "Not loaded yet");
+    var next = !DEMO && Date.now() < nextAt() && !store("gc-pending-export") ? " · next update " + fmtTime.format(nextAt()) : "";
+    $("status-line").textContent = msg || ((cache.updated ? "Updated " + fmtWhen.format(cache.updated) + " · " + cache.rows.length + " records" : "Not loaded yet") + next);
+    var btn = $("refresh-btn");
+    if (!btn.disabled || !msg) btn.textContent = next ? "Next update " + fmtTime.format(nextAt()) : "Refresh";
   }
   function renderAll() { renderVisits(); renderPeople(); renderStatus(); }
 
@@ -475,7 +521,7 @@
       saveCache(); renderAll();
       toast(added.length ? added.length + " new records" : "Up to date");
     }).catch(function (e) { renderStatus(e.message); toast(e.message); throw e; })
-      .finally(function () { btn.disabled = false; });
+      .finally(function () { btn.disabled = false; if (!$("status-line").textContent.match(/export|reach|key|said/i)) renderStatus(); });
   }
   function showApp() { $("lock").hidden = true; $("app").hidden = false; $("demo-banner").hidden = !DEMO; renderAll(); }
   function showLock() { $("app").hidden = true; $("lock").hidden = false; $("key-input").focus(); }
@@ -585,7 +631,7 @@
   // ---------- start ----------
   if (DEMO || key()) {
     showApp();
-    if (!DEMO && Date.now() - cache.updated > 5 * 60 * 1000) refresh().catch(function () {});
+    if (!DEMO && (store("gc-pending-export") || Date.now() >= nextAt())) refresh().catch(function () {});
   } else showLock();
 })();
 </script>
