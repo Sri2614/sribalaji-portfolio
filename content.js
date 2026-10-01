@@ -3,7 +3,7 @@
 window.CONTENT = {
   name: "Sri Balaji",
   role: "Senior Cloud & Platform Engineer · Kubernetes · DevSecOps",
-  tagline: "I design and run the platforms regulated banks build on: secure-by-default Kubernetes, delivery pipelines that satisfy auditors, and the guardrails that let many product teams ship safely. I lead modernisation programmes and advise banks on their cloud strategy.",
+  tagline: "I design and run the cloud platforms regulated banks build on: secure-by-default Kubernetes and delivery pipelines that pass audit.",
   location: "Almere, Netherlands",
   timeZone: "Europe/Amsterdam",
   // Job-search details (availability, permit transfer, the 90-day plan) show only to visitors who arrive
@@ -22,40 +22,15 @@ window.CONTENT = {
     { label: "GitHub", url: "https://github.com/Sri2614" },
   ],
 
-  // Shown as a Kubernetes-style manifest in the hero.
-  manifest: [
-    "apiVersion: people/v1",
-    "kind: Engineer",
-    "metadata:",
-    "  name: sri-balaji",
-    "  location: almere-nl",
-    "spec:",
-    "  experience: 7y+",
-    "  domain: regulated-banking",
-    "  scope: [platform-strategy, modernisation, advisory]",
-    "  platforms: [aks, eks, openshift]",
-    "  delivery: [terraform, gitops, argocd]",
-    "  security: [policy-as-code, entra-id, rbac]",
-  ],
-  manifestOpen: [
-    "status:",
-    "  openToWork: true",
-    "  workPermit: nl-hsm  # transferable",
-  ],
+  // Job-search line on the hero card (personal ?ref= links only).
+  heroOpen: "Open to new roles · work permit transferable",
 
-  stats: [
-    { value: "7+", label: "years building cloud platforms" },
-    { value: "7", label: "professional certifications" },
-    { value: "AKS + EKS", label: "Kubernetes platforms I run in production" },
-  ],
+  // Shown on the hero card.
+  years: "7+",
 
   // About. **double asterisks** mark phrases highlighted in the lede.
   about: {
     lede: "I’m a senior cloud and platform engineer with over seven years in cloud, currently at **Backbase**, where digital banking runs under strict regulation. My work sits where engineering meets risk: I lead **application modernisation programmes** for banks across multiple markets, own the **delivery platform** product teams release through, and advise enterprise clients on their **AWS and Azure strategy**.",
-    notes: [
-      { k: "How I think", text: "I think in systems, not tickets. A good platform is fast for developers and boring for auditors: Kubernetes on AKS and EKS, every environment defined in Terraform and Git, and security enforced as pipeline gates rather than a scramble before release." },
-      { k: "Growing engineers", text: "I invest in making other engineers better: I run workshops for engineering chapters on Kubernetes security, identity with Entra ID and ArgoCD, and DevSecOps, and I support client teams with training as they adopt the platform." },
-    ],
   },
   facts: [
     { k: "Based in", v: "Almere, Netherlands", icon: "pin", clock: true },
@@ -225,7 +200,7 @@ window.CONTENT = {
     },
   ],
 
-  // Skills as a bento grid. `roles` = where each capability was used, per the CV;
+  // Skills, as a list. `roles` = where each capability was used, per the CV;
   // "since" is derived from the earliest of those roles, never typed in by hand.
   roles: [
     { key: "bb", name: "Backbase", year: 2022 },
@@ -234,8 +209,7 @@ window.CONTENT = {
   ],
   capabilities: [
     { id: "k8s", name: "Kubernetes platforms", tools: "AKS · EKS · OpenShift · Helm · Docker", roles: ["bb", "sk", "rv"],
-      evidence: "Run AKS and EKS platforms for banking product teams; hardened clusters with pod security, network policies and RBAC.",
-      highlight: "From securing clusters with Kops to running AKS and EKS for banks." },
+      evidence: "Run AKS and EKS platforms for banking product teams; hardened clusters with pod security, network policies and RBAC." },
     { id: "iac", name: "Infrastructure as Code", tools: "Terraform · ARM templates · CloudFormation · Pulumi", roles: ["bb", "sk", "rv"],
       evidence: "Every environment defined as code; built a secure-by-default Terraform module library." },
     { id: "gitops", name: "GitOps & CI/CD", tools: "Azure DevOps · ArgoCD · GitLab CI · GitHub Actions", roles: ["bb", "sk"],

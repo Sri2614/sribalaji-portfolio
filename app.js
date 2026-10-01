@@ -64,6 +64,8 @@
     } else fallback();
   }
 
+  var phone = matchMedia("(max-width: 600px)");
+
   // ---------- Discreet mode ----------
   // Job-search details only for people who arrive through a personal link (?ref=...); the site remembers
   // them for 90 days. Everyone else (colleagues, search engines, link previews, the GitHub profile link)
@@ -77,7 +79,6 @@
     } catch (e) { return viaLink; }
   })();
   root.classList.toggle("open-mode", openMode);
-  var manifest = openMode ? c.manifest.concat(c.manifestOpen || []) : c.manifest;
 
   // ---------- Hero ----------
   var linkedin = c.links.filter(function (l) { return /linkedin/i.test(l.label); })[0];
@@ -127,33 +128,7 @@
   tick();
   setInterval(tick, 30000);
 
-  // Manifest with minimal YAML highlighting (built from DOM nodes, not HTML strings).
-  var code = $("manifest");
-  manifest.forEach(function (line, i) {
-    var row = el("span", { cls: "ln" });
-    row.style.setProperty("--i", i);
-    var m = line.match(/^(\s*)([\w.-]+)(:)(\s*)([^#]*?)(\s*)(#.*)?$/);
-    if (!m) { row.textContent = line; }
-    else {
-      row.appendChild(document.createTextNode(m[1]));
-      row.appendChild(el("span", { cls: "tk-key", text: m[2] }));
-      row.appendChild(el("span", { cls: "tk-punc", text: m[3] }));
-      row.appendChild(document.createTextNode(m[4]));
-      if (m[5]) {
-        var v = m[5];
-        var cls = /^(true|false)$/.test(v) ? "tk-bool" : /^\[.*\]$/.test(v) ? "tk-list" : "tk-val";
-        row.appendChild(el("span", { cls: cls, text: v }));
-      }
-      if (m[7]) row.appendChild(el("span", { cls: "tk-comment", text: m[6] + m[7] }));
-    }
-    code.appendChild(row);
-    if (i < manifest.length - 1) code.appendChild(document.createTextNode("\n"));
-  });
-  $("manifest-copy").addEventListener("click", function () { copy(manifest.join("\n"), "Manifest copied"); });
 
-  c.stats.forEach(function (s) {
-    $("stats").appendChild(el("div", { cls: "stat" }, [el("dt", { text: s.label }), el("dd", { text: s.value })]));
-  });
 
   // ---------- About ----------
   // Lede: split into words so they can light up as the reader scrolls. **x** marks a highlight.
@@ -195,10 +170,6 @@
     }).observe(lede);
   }
 
-  var notes = $("about-notes");
-  c.about.notes.forEach(function (n) {
-    notes.appendChild(el("div", { cls: "note" }, [el("h3", { cls: "note-k", text: n.k }), el("p", { text: n.text })]));
-  });
 
   // At a glance
   var FACT_ICONS = {
@@ -325,6 +296,15 @@
       metrics,
       el("ul", { cls: "chips small case-stack" }, cs.stack.map(function (t) { return el("li", { text: t }); })),
     ]);
+    // Footer: position in the set, and a button to the next case (wraps round to the first).
+    var nextI = (i + 1) % c.caseStudies.length, nextBtn = el("button", { cls: "case-next-btn" }, [
+      el("span", { cls: "case-next-k", text: nextI === 0 ? "Back to the first" : "Next case" }),
+      el("span", { cls: "case-next-t", text: c.caseStudies[nextI].title }),
+      el("span", { cls: "case-next-arrow", text: nextI === 0 ? "↺" : "→" }),
+    ]);
+    nextBtn.type = "button";
+    nextBtn.addEventListener("click", function () { goCase(nextI); });
+    panel.appendChild(el("div", { cls: "case-next" }, [el("span", { cls: "case-count", text: num + " / " + String(c.caseStudies.length).padStart(2, "0") }), nextBtn]));
     panel.id = pid;
     panel.setAttribute("role", "region");
     panel.setAttribute("aria-labelledby", tab.id);
@@ -345,6 +325,13 @@
       if (on) it.panel.removeAttribute("inert"); else it.panel.setAttribute("inert", "");
     });
     activeCase = i;
+  }
+  // From a case's "Next case" button: open it, keep focus on its tab, and on phones bring it into view.
+  function goCase(i) {
+    openCase(i, true);
+    var t = caseItems[i].tab;
+    t.focus({ preventScroll: true });
+    if (!wideScreen.matches) t.scrollIntoView({ block: "start", behavior: reduceMotion ? "auto" : "smooth" });
   }
   caseItems.forEach(function (it, i) {
     it.tab.addEventListener("click", function () {
@@ -395,7 +382,7 @@
   });
 
   // ---------- Skills ----------
-  // Bento grid. Tile placement lives in CSS (grid-template-areas keyed by capability id).
+  // Icons for the skills (also used on the hero card).
   var TILE_ICONS = {
     k8s: '<path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z"/><circle cx="12" cy="12" r="3"/><path d="M12 5v4M12 15v4M5.8 8.5l3.5 2M14.7 13.5l3.5 2M18.2 8.5l-3.5 2M9.3 13.5l-3.5 2"/>',
     iac: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/><path d="m3 17.5 9 4.5 9-4.5" opacity=".5"/>',
@@ -411,100 +398,62 @@
     d.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + TILE_ICONS[id] + "</svg>";
     return d;
   }
+  // ---------- Hero card: the current role in plain English ----------
+  (function () {
+    var job = c.experience[0], parts = job.role.split(", ");
+    var card = $("hero-card");
+    var mono = el("span", { cls: "hc-mono", text: job.company.charAt(0) });
+    mono.setAttribute("aria-hidden", "true");
+    card.appendChild(el("div", { cls: "hc-head" }, [
+      mono,
+      el("div", { cls: "hc-who" }, [
+        el("p", { cls: "hc-kicker" }, [el("i"), document.createTextNode("Currently at")]),
+        el("p", { cls: "hc-company", text: job.company }),
+      ]),
+      el("span", { cls: "hc-since", text: "Since " + job.period.split("–")[0].trim() }),
+    ]));
+    card.appendChild(el("div", { cls: "hc-role" }, [
+      el("p", { cls: "hc-title", text: parts[0] }),
+      el("p", { cls: "hc-sub", text: parts.slice(1).join(", ") }),
+    ]));
+    card.appendChild(el("p", { cls: "hc-label", text: "What I do" }));
+    card.appendChild(el("ul", { cls: "hc-focus" }, ["k8s", "gitops", "sec"].map(function (id) {
+      var cap = c.capabilities.filter(function (x) { return x.id === id; })[0];
+      return el("li", {}, [
+        tileIcon(id),
+        el("div", {}, [el("strong", { text: cap.name }), el("span", { text: cap.tools.split(" · ").slice(0, 3).join(" · ") })]),
+      ]);
+    })));
+    var certs = [], issuers = [];
+    c.certifications.forEach(function (g) { g.items.forEach(function (it) { certs.push(it); if (issuers.indexOf(it.issuer) < 0) issuers.push(it.issuer); }); });
+    var foot = el("a", { cls: "hc-foot", href: "#certs" }, [
+      el("span", { cls: "hc-certs" }, [el("strong", { text: c.years }), document.createTextNode(" years in cloud")]),
+      el("span", { cls: "hc-dot" }),
+      el("span", { cls: "hc-certs" }, [el("strong", { text: String(certs.length) }), document.createTextNode(" certifications")]),
+      el("span", { cls: "hc-arrow", text: "→" }),
+    ]);
+    foot.setAttribute("aria-label", c.years + " years in cloud, " + certs.length + " certifications from " + issuers.join(", ") + ". See all");
+    card.appendChild(foot);
+    if (openMode && c.heroOpen) card.appendChild(el("p", { cls: "hc-open" }, [el("i"), document.createTextNode(c.heroOpen)]));
+  })();
+
   function sinceYear(roleKeys) {
     var ys = c.roles.filter(function (r) { return r.year && roleKeys.indexOf(r.key) > -1; }).map(function (r) { return r.year; });
     return ys.length ? Math.min.apply(null, ys) : null;
   }
-  function roleDots(roleKeys) {
-    var wrap = el("span", { cls: "role-dots" });
-    c.roles.forEach(function (r) {
-      var d = el("span", { cls: "role-dot" + (roleKeys.indexOf(r.key) > -1 ? " on" : "") });
-      d.title = r.name;
-      wrap.appendChild(d);
-    });
-    wrap.setAttribute("role", "img");
-    wrap.setAttribute("aria-label", "Used at " + c.roles.filter(function (r) { return roleKeys.indexOf(r.key) > -1; }).map(function (r) { return r.name; }).join(", "));
-    return wrap;
-  }
-  // Decorative, static illustrations per tile (fixed markup, aria-hidden). No figures: they show
-  // how the work flows, never invented metrics.
-  var VIZ = {
-    k8s:
-      '<svg class="viz-orbit" viewBox="0 0 260 260">' +
-        '<defs><linearGradient id="kgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="stop-a"/><stop offset="1" class="stop-b"/></linearGradient></defs>' +
-        '<circle cx="130" cy="130" r="118" class="ring ring-dash"/><circle cx="130" cy="130" r="82" class="ring"/><circle cx="130" cy="130" r="46" class="ring ring-dash"/>' +
-        '<g class="orbit orbit-1"><circle cx="130" cy="48" r="7" class="pod"/><circle cx="212" cy="130" r="5" class="pod pod-b"/><circle cx="130" cy="212" r="7" class="pod"/><circle cx="48" cy="130" r="5" class="pod pod-b"/></g>' +
-        '<g class="orbit orbit-2"><rect x="124" y="6" width="12" height="12" rx="3" class="node"/><rect x="226" y="183" width="12" height="12" rx="3" class="node"/><rect x="22" y="183" width="12" height="12" rx="3" class="node"/></g>' +
-        '<polygon points="130,98 158,114 158,146 130,162 102,146 102,114" class="core"/>' +
-        '<g class="wheel"><circle cx="130" cy="130" r="9"/><path d="M130 112v9M130 139v9M114.4 121l7.8 4.5M137.8 134.5l7.8 4.5M145.6 121l-7.8 4.5M122.2 134.5l-7.8 4.5"/></g>' +
-      "</svg>" +
-      '<span class="orbit-tag tag-aks">AKS</span><span class="orbit-tag tag-eks">EKS</span>',
-    iac:
-      '<pre class="viz-code"><span class="c-k">module</span> <span class="c-s">"platform"</span> {\n' +
-      '  source   = <span class="c-s">"./modules/aks"</span>\n' +
-      '  env      = <span class="c-s">"prod"</span>\n' +
-      '  baseline = <span class="c-b">true</span>\n}<span class="viz-cursor"></span></pre>',
-    gitops:
-      '<div class="viz-flow"><div class="flow-track"><span class="flow-pulse"></span></div>' +
-      '<ol class="flow-steps"><li><i></i>commit</li><li><i></i>checks</li><li><i></i>sync</li><li><i></i>live</li></ol></div>',
-    sec:
-      '<div class="viz-gates"><span class="gate-end">code</span>' +
-      '<span class="gate">SAST</span><span class="gate">DAST</span><span class="gate">IaC scan</span><span class="gate">Policy</span>' +
-      '<span class="gate-end gate-deploy">deploy</span></div>',
-    obs:
-      '<svg class="viz-spark" viewBox="0 0 220 92" preserveAspectRatio="none">' +
-        '<defs><linearGradient id="sgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="stop-a"/><stop offset="1" class="stop-fade"/></linearGradient></defs>' +
-        '<line x1="0" y1="30" x2="220" y2="30" class="slo-line"/>' +
-        '<path class="spark-area" d="M0,72 L20,64 L40,68 L60,52 L80,58 L100,44 L120,50 L140,40 L160,54 L180,18 L200,46 L220,42 L220,92 L0,92Z"/>' +
-        '<path class="spark-line" pathLength="1" d="M0,72 L20,64 L40,68 L60,52 L80,58 L100,44 L120,50 L140,40 L160,54 L180,18 L200,46 L220,42"/>' +
-        '<circle cx="180" cy="18" r="4" class="spark-alert"/>' +
-      "</svg>" +
-      '<span class="slo-tag">SLO</span><span class="alert-tag">alert</span>',
-    cloud:
-      '<svg class="viz-net" viewBox="0 0 220 100">' +
-        '<path d="M52 26 H168" class="link"/><path d="M40 36 L100 72" class="link link-b"/><path d="M180 36 L120 72" class="link"/>' +
-        '<rect x="6" y="12" width="68" height="28" rx="8" class="net-node"/><text x="40" y="30" class="net-label">azure</text>' +
-        '<rect x="152" y="12" width="62" height="28" rx="8" class="net-node"/><text x="183" y="30" class="net-label">aws</text>' +
-        '<rect x="70" y="64" width="80" height="28" rx="8" class="net-node net-onprem"/><text x="110" y="82" class="net-label">on-prem</text>' +
-      "</svg>",
-    apps:
-      '<div class="viz-events"><span class="ev-box">service-bus</span><span class="ev-link"><i></i></span>' +
-      '<span class="ev-box ev-fn">function</span><span class="ev-link"><i></i></span><span class="ev-box">event-grid</span></div>',
-  };
-  function viz(id) {
-    var d = el("div", { cls: "viz viz-" + id });
-    d.setAttribute("aria-hidden", "true");
-    d.innerHTML = VIZ[id];
-    return d;
-  }
-
-  var bento = $("bento");
+  // A calm two-column list: icon, name, since when, one sentence, tools.
   c.capabilities.forEach(function (cap) {
-    var y = sinceYear(cap.roles), hero = !!cap.highlight;
-    var head = el("div", { cls: "tile-head" }, [tileIcon(cap.id), el("h3", { text: cap.name })]);
-    var tools = el("p", { cls: "tile-tools", text: cap.tools });
-    var ev = el("p", { cls: "tile-ev", text: cap.evidence });
-    var foot = el("div", { cls: "tile-foot" }, [el("span", { cls: "tile-since", text: !hero && y ? "since " + y : "" }), roleDots(cap.roles)]);
-    var kids = hero
-      ? [viz(cap.id), el("div", { cls: "tile-hero-copy" }, [head, tools, ev]),
-         el("div", { cls: "tile-hero-year" }, [
-           el("p", { cls: "big-year-kicker", text: "Since" }),
-           el("p", { cls: "big-year", text: String(y) }),
-           el("p", { cls: "big-year-label", text: cap.highlight }),
-         ]), foot]
-      : [head, viz(cap.id), tools, ev, foot];
-    bento.appendChild(el("article", { cls: "tile spot tile-" + cap.id + (hero ? " tile-hero" : "") }, kids));
+    var y = sinceYear(cap.roles);
+    $("skills-list").appendChild(el("article", { cls: "skill" }, [
+      tileIcon(cap.id),
+      el("h3", { text: cap.name }),
+      el("span", { cls: "skill-since", text: y ? "since " + y : "" }),
+      el("p", { text: cap.evidence }),
+      el("ul", { cls: "skill-tools" }, cap.tools.split(" · ").map(function (t) { return el("li", { text: t }); })),
+    ]));
   });
-  // Certifications: a summary tile in the grid, the full grouped list below it.
   var allCerts = [];
   c.certifications.forEach(function (g) { allCerts = allCerts.concat(g.items); });
-  bento.appendChild(el("article", { cls: "tile spot tile-certs" }, [
-    el("div", { cls: "tile-head" }, [tileIcon("certs"), el("h3", { text: "Certified" }), el("span", { cls: "count-badge", text: String(allCerts.length) })]),
-    el("ul", { cls: "creds" }, c.certifications[0].items.slice(0, 3).map(function (cert) {
-      return el("li", { cls: "cred" }, [el("span", { cls: "cred-issuer", text: cert.issuer }), el("span", { cls: "cred-name", text: cert.name })]);
-    })),
-    el("a", { cls: "tile-more", href: "#certs", text: "See all " + allCerts.length + " →" }),
-  ]));
 
   // Honeycomb: rows alternate N and N-1 badges, each badge spanning two grid columns,
   // odd rows shifted by one column so the hexagons tessellate.
@@ -557,15 +506,26 @@
     $("learning").hidden = false;
   }
   ["(min-width: 1021px)", "(min-width: 601px)"].forEach(function (q) { matchMedia(q).addEventListener("change", layoutHive); });
-  var key = $("bento-key");
-  key.appendChild(roleDots(c.roles.map(function (r) { return r.key; })));
-  key.appendChild(document.createTextNode("Where I used it: " + c.roles.map(function (r) { return r.name; }).join(" · ")));
 
   // ---------- First 90 days ----------
   var plan = c.first90;
   $("plan").hidden = !plan || !openMode;
   // Number the visible sections 01, 02, ... so a hidden section never leaves a gap.
   document.querySelectorAll(".section:not([hidden]) .label .idx").forEach(function (idx, i) { idx.textContent = (i < 9 ? "0" : "") + (i + 1); });
+  // Each section label carries a small button that copies a direct link to that section (clean URL, no ?ref).
+  document.querySelectorAll(".section .label").forEach(function (lbl) {
+    var sec = lbl.closest(".section"), name = lbl.textContent.replace(/^\s*\d+\s*/, "").trim();
+    var b = el("button", { cls: "label-link" });
+    b.type = "button";
+    b.setAttribute("aria-label", "Copy link to " + name);
+    b.title = "Copy link";
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>';
+    b.addEventListener("click", function () {
+      copy(location.origin + location.pathname + "#" + sec.id, "Link to " + name + " copied");
+      track("copy-link-" + sec.id, "Copied link: " + name);
+    });
+    lbl.appendChild(b);
+  });
   if (plan && openMode) {
     $("plan-title").textContent = plan.title;
     $("plan-intro").textContent = plan.intro;
@@ -662,7 +622,20 @@
       ? el("div", { cls: "xp-themes" }, x.themes.map(function (t, ti) {
           var icon = el("span", { cls: "xp-theme-icon" });
           icon.innerHTML = THEME_ICONS[ti % THEME_ICONS.length];
-          return el("section", { cls: "xp-theme" }, [el("div", { cls: "xp-theme-head" }, [icon, el("h4", { text: t.title })]), pointList(t.points, "xp-list")]);
+          var list = pointList(t.points, "xp-list");
+          list.id = "xp-list-" + r.i + "-" + ti;
+          var toggle = el("button", { cls: "xp-theme-head" }, [icon, el("h4", { text: t.title }), el("span", { cls: "xp-chevron" })]);
+          toggle.type = "button";
+          toggle.setAttribute("aria-controls", list.id);
+          toggle.setAttribute("aria-expanded", "true");
+          var section = el("section", { cls: "xp-theme" }, [toggle, list]);
+          toggle.addEventListener("click", function () {
+            if (!phone.matches) return;
+            var open = toggle.getAttribute("aria-expanded") !== "true";
+            toggle.setAttribute("aria-expanded", String(open));
+            section.classList.toggle("collapsed", !open);
+          });
+          return section;
         }))
       : pointList(x.points, "xp-list xp-list-grid");
     var panel = el("div", { cls: "xp-panel" }, [
@@ -690,6 +663,19 @@
   });
   openRole(0);
 
+  // Phones: Backbase's four areas collapse to their headings (first one open); wider screens show everything.
+  function applyThemeMode() {
+    document.querySelectorAll(".xp-themes").forEach(function (box) {
+      box.querySelectorAll(".xp-theme").forEach(function (sec, i) {
+        var open = !phone.matches || i === 0;
+        sec.classList.toggle("collapsed", !open);
+        sec.querySelector(".xp-theme-head").setAttribute("aria-expanded", String(open));
+      });
+    });
+  }
+  applyThemeMode();
+  phone.addEventListener("change", applyThemeMode);
+
   // Recommendations: hidden until at least one is added in content.js.
   if (c.testimonials && c.testimonials.length) {
     c.testimonials.forEach(function (q) {
@@ -715,6 +701,21 @@
     a.querySelector(".channel-icon").innerHTML = iconFor(l.label);
     $("contact-channels").appendChild(el("li", {}, [a]));
   });
+
+  // A hint under the message that changes with the chosen topic.
+  var TOPIC_HINTS = {
+    "Job opportunity": "Useful to include: the role, the company, location, and whether it’s hybrid or remote.",
+    "Speaking / workshop": "Useful to include: the event or team, the audience, a rough date and the topic.",
+    "Something else": "Anything goes. A couple of lines is plenty.",
+  };
+  var topicHint = $("cf-hint");
+  function updateHint() {
+    var t = (document.querySelector('#contact-form input[name="topic"]:checked') || {}).value;
+    topicHint.textContent = TOPIC_HINTS[t] || "";
+    topicHint.classList.remove("swap"); void topicHint.offsetWidth; topicHint.classList.add("swap");
+  }
+  document.querySelectorAll('#contact-form input[name="topic"]').forEach(function (r) { r.addEventListener("change", updateHint); });
+  updateHint();
 
   // No backend: validate, then compose an email in the visitor's mail app.
   $("contact-form").addEventListener("submit", function (e) {
@@ -749,19 +750,41 @@
     }, reduceMotion ? 0 : 500);
   });
 
-  // Footer: name and role, page links, the same social links as the hero.
-  $("footer-name").textContent = c.name;
-  $("footer-role").textContent = c.role.split("·")[0].trim();
-  $("footer-location").textContent = c.location;
-  $("footer-social").appendChild(iconLink("Email", "mailto:" + c.email));
-  c.links.forEach(function (l) { $("footer-social").appendChild(iconLink(l.label, l.url)); });
+  // Footer: one line (everything else is already in the nav and the contact section).
   $("footer-text").textContent = "© " + new Date().getFullYear() + " " + c.name;
+  // "Updated" comes from the page's Last-Modified date (set by GitHub Pages on each deploy).
+  var modified = new Date(document.lastModified);
+  if (!isNaN(modified)) {
+    $("footer-updated").textContent = "Updated " + modified.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+    $("footer-updated").dateTime = modified.toISOString().slice(0, 10);
+  }
 
-  // Rotating edge light on the manifest and the contact form (styles: .edge).
-  document.querySelectorAll(".manifest, .contact-form").forEach(function (box) {
+  // Rotating edge light on the hero card and the contact form (styles: .edge).
+  document.querySelectorAll(".hero-card, .contact-form").forEach(function (box) {
     var edge = el("span", { cls: "edge" }, [el("i")]);
     edge.setAttribute("aria-hidden", "true");
     box.appendChild(edge);
+  });
+
+  // Phones: card rows become swipeable carousels (CSS scroll-snap); dots show the position.
+  [["principles", "How I work"], ["workshop-list", "Workshops and talks"]].forEach(function (pair) {
+    var row = $(pair[0]);
+    if (!row) return;
+    row.setAttribute("aria-label", pair[1]);
+    var dots = el("div", { cls: "snap-dots" });
+    dots.setAttribute("aria-hidden", "true");
+    var items = Array.prototype.slice.call(row.children);
+    items.forEach(function () { dots.appendChild(el("i")); });
+    row.after(dots);
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var left = row.scrollLeft, best = 0, dist = Infinity;
+      items.forEach(function (it, i) { var d = Math.abs(it.offsetLeft - row.offsetLeft - left); if (d < dist) { dist = d; best = i; } });
+      Array.prototype.forEach.call(dots.children, function (d, i) { d.classList.toggle("on", i === best); });
+    }
+    row.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    update();
   });
 
   // ---------- Theme ----------
@@ -771,8 +794,23 @@
     try { localStorage.setItem("theme", t); } catch (e) {}
     if (announce) toast("Theme: " + THEMES[t]);
   }
+  // Switching theme reveals the new one as a circle growing from the toggle (View Transitions, where supported).
+  function switchTheme(t, from, announce) {
+    if (t === root.getAttribute("data-theme")) return;
+    if (!document.startViewTransition || reduceMotion) { setTheme(t, announce); return; }
+    var r = from ? from.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
+    var x = r.left + r.width / 2, y = r.top + r.height / 2;
+    var radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    root.classList.add("theme-switching");
+    var vt = document.startViewTransition(function () { setTheme(t, announce); });
+    vt.ready.then(function () {
+      root.animate({ clipPath: ["circle(0px at " + x + "px " + y + "px)", "circle(" + radius + "px at " + x + "px " + y + "px)"] },
+        { duration: 560, easing: "cubic-bezier(.3,.7,.2,1)", pseudoElement: "::view-transition-new(root)" });
+    }).catch(function () {});
+    vt.finished.finally(function () { root.classList.remove("theme-switching"); });
+  }
   $("theme-toggle").addEventListener("click", function () {
-    setTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    switchTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark", this);
   });
   // Follow OS changes until the visitor picks a theme themselves.
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (e) {
@@ -796,10 +834,22 @@
 
   // ---------- Scroll: progress bar + nav state ----------
   var progress = $("progress"), nav = $("nav"), ticking = false;
+  var fab = $("top-fab"), fabRing = $("top-ring"), fabOn = false;
+  var lastY = scrollY, narrow = matchMedia("(max-width: 860px)");
   function onScroll() {
-    var h = document.documentElement.scrollHeight - innerHeight;
-    progress.style.transform = "scaleX(" + (h > 0 ? scrollY / h : 0) + ")";
+    var h = document.documentElement.scrollHeight - innerHeight, p = h > 0 ? scrollY / h : 0;
+    progress.style.transform = "scaleX(" + p + ")";
     nav.classList.toggle("scrolled", scrollY > 8);
+    // Phones: the nav slides away while reading down and comes back on any scroll up.
+    var dy = scrollY - lastY;
+    if (Math.abs(dy) > 6 || scrollY < 120) {
+      nav.classList.toggle("nav-away", narrow.matches && dy > 0 && scrollY > 120 && menu.hidden);
+      lastY = scrollY;
+    }
+    // Back-to-top button: after the hero, but out of the way of the contact form and footer.
+    var on = scrollY > innerHeight * 0.9 && activeId !== "contact";
+    if (on !== fabOn) { fabOn = on; fab.classList.toggle("show", on); fab.tabIndex = on ? 0 : -1; }
+    if (on) fabRing.style.strokeDashoffset = (1 - p).toFixed(4);
     ticking = false;
   }
   addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
@@ -807,7 +857,7 @@
 
   // Active-section indicator
   var navLinks = Array.prototype.slice.call(document.querySelectorAll("#primary-nav a"));
-  var indicator = $("nav-indicator");
+  var indicator = $("nav-indicator"), navWhere = $("nav-where");
   var activeId = null;
   function setActive(id) {
     activeId = id;
@@ -819,6 +869,15 @@
     });
     // The Contact section is represented by the "Let's talk" button rather than a link.
     document.querySelector(".nav-cta").classList.toggle("is-current", id === "contact");
+    // Phones have no nav links, so the brand shows which section you are in.
+    var lbl = id && $(id).querySelector(".label");
+    var where = lbl ? lbl.textContent.replace(/\s+/g, " ").trim().replace(/^(\d+) /, "$1 · ") : "";
+    if (navWhere.textContent !== where) {
+      navWhere.textContent = where;
+      navWhere.classList.remove("swap"); void navWhere.offsetWidth; navWhere.classList.add("swap");
+    }
+    $("brand-link").classList.toggle("has-where", !!where);
+    if (fab) onScroll();
     if (!link) { indicator.style.opacity = 0; return; }
     indicator.style.opacity = 1;
     indicator.style.width = link.offsetWidth + "px";
@@ -838,7 +897,6 @@
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
         en.target.classList.add("in");
-        if (en.target.id === "stats") countUp(en.target);
         en.target.querySelectorAll(".stagger").forEach(function (child, i) {
           var d = Math.min(i * 60, 480);
           child.style.transitionDelay = d + "ms";
@@ -849,29 +907,13 @@
         io.unobserve(en.target);
       });
     }, { threshold: 0.06, rootMargin: "0px 0px -8% 0px" });
-    document.querySelectorAll(".section, .stats").forEach(function (s) {
+    document.querySelectorAll(".section").forEach(function (s) {
       s.classList.add("reveal");
-      s.querySelectorAll(".principle, .case-tab, .career-seg, .tile, .hex, .pass, .quote, .stat, .phase").forEach(function (ch) { ch.classList.add("stagger"); });
+      s.querySelectorAll(".principle, .case-tab, .career-seg, .skill, .hex, .pass, .quote, .phase").forEach(function (ch) { ch.classList.add("stagger"); });
       io.observe(s);
     });
   }
 
-  // Animate numeric stats ("7+", "11") from zero; non-numeric values are left alone.
-  function countUp(root) {
-    root.querySelectorAll("dd").forEach(function (dd) {
-      var m = dd.textContent.match(/^(\d+)(\D*)$/);
-      if (!m) return;
-      var target = +m[1], suffix = m[2], start = null, dur = 1400;
-      function frame(t) {
-        if (start === null) start = t;
-        var p = Math.min((t - start) / dur, 1), eased = 1 - Math.pow(1 - p, 3);
-        dd.textContent = Math.round(target * eased) + suffix;
-        if (p < 1) requestAnimationFrame(frame);
-      }
-      dd.textContent = "0" + suffix;
-      requestAnimationFrame(frame);
-    });
-  }
 
   // Primary buttons lean slightly toward the cursor (mouse only, not touch).
   if (!reduceMotion && matchMedia("(pointer: fine)").matches) {
@@ -907,11 +949,51 @@
     document.querySelectorAll(".hero, .section").forEach(function (s) { idleIo.observe(s); });
   }
 
+  // Arriving at a section from a link (nav, footer, ⌘K, a shared #link): its heading lights up briefly.
+  var arriveTimer;
+  function arrive(id) {
+    var sec = $(id);
+    if (!sec || reduceMotion) return;
+    var head = sec.querySelector(".section-head, .contact-copy");
+    if (!head) return;
+    var fired = false;
+    function go() {
+      if (fired) return; fired = true;
+      document.querySelectorAll(".arrived").forEach(function (h) { h.classList.remove("arrived"); });
+      void head.offsetWidth;
+      head.classList.add("arrived");
+      clearTimeout(arriveTimer);
+      arriveTimer = setTimeout(function () { head.classList.remove("arrived"); }, 1800);
+    }
+    if ("onscrollend" in window) addEventListener("scrollend", go, { once: true });
+    setTimeout(go, 900);
+  }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute("href").length > 1) arrive(a.getAttribute("href").slice(1));
+  });
+  if (location.hash.length > 1) setTimeout(function () { arrive(location.hash.slice(1)); }, 300);
+
+  // Hero background drifts gently against the cursor (desktop mouse only; transform-only, once per frame).
+  if (!reduceMotion && matchMedia("(pointer: fine) and (min-width: 861px)").matches) {
+    var heroBg = document.querySelector(".hero-bg"), heroEl = document.querySelector(".hero"), px = null;
+    heroEl.addEventListener("pointermove", function (e) {
+      if (px === null) requestAnimationFrame(function () {
+        heroBg.style.setProperty("--px", px.x.toFixed(3));
+        heroBg.style.setProperty("--py", px.y.toFixed(3));
+        px = null;
+      });
+      px = { x: e.clientX / innerWidth - 0.5, y: e.clientY / innerHeight - 0.5 };
+    });
+    heroEl.addEventListener("pointerleave", function () { heroBg.style.setProperty("--px", 0); heroBg.style.setProperty("--py", 0); });
+  }
+
+
   // ---------- Command palette ----------
   var palette = $("palette"), input = $("palette-input"), listEl = $("palette-list");
   $("kbd-hint").textContent = isMac ? "⌘K" : "Ctrl K";
 
-  function go(id) { return function () { $(id).scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" }); }; }
+  function go(id) { return function () { $(id).scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" }); arrive(id); }; }
   var COMMANDS = [
     { group: "Navigate", label: "About", run: go("about") },
     { group: "Navigate", label: "Selected work (case studies)", run: go("work") },
@@ -930,7 +1012,7 @@
     COMMANDS.push({ group: "Actions", label: "Open " + l.label, hint: "↗", run: function () { window.open(l.url, "_blank", "noopener"); } });
   });
   Object.keys(THEMES).forEach(function (k) {
-    COMMANDS.push({ group: "Theme", label: "Theme: " + THEMES[k], theme: k, run: function () { setTheme(k, true); } });
+    COMMANDS.push({ group: "Theme", label: "Theme: " + THEMES[k], theme: k, run: function () { switchTheme(k, $("theme-toggle"), true); } });
   });
 
   var filtered = COMMANDS, sel = 0;

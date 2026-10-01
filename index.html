@@ -6,7 +6,7 @@
   <title>Sri Balaji · Senior Cloud & Platform Engineer</title>
   <meta name="description" content="Sri Balaji is a senior cloud and platform engineer in Almere, Netherlands: Kubernetes on AKS and EKS, Terraform, GitOps and DevSecOps for regulated digital banking.">
   <meta name="author" content="Sri Balaji">
-  <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#f5f7f4" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b0c0e" media="(prefers-color-scheme: dark)">
   <meta name="color-scheme" content="light dark">
 
@@ -38,7 +38,7 @@
   }
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=62">
+  <link rel="stylesheet" href="styles.css?v=74">
   <script>
     // Set the theme before first paint: saved choice, else follow the OS.
     (function () {
@@ -57,7 +57,7 @@
 
   <header class="nav" id="nav">
     <div class="wrap nav-inner">
-      <a href="#top" class="brand"><span class="brand-avatar" aria-hidden="true"><img src="photo.jpg" alt="" width="28" height="28" decoding="async"></span><span id="brand"></span></a>
+      <a href="#top" class="brand" id="brand-link"><span class="brand-avatar" aria-hidden="true"><img src="photo.jpg" alt="" width="28" height="28" decoding="async"></span><span class="brand-text"><span id="brand"></span><span class="nav-where" id="nav-where" aria-hidden="true"></span></span></a>
       <nav aria-label="Primary" class="nav-links" id="primary-nav">
         <a href="#about" data-nav="about">About</a>
         <a href="#work" data-nav="work">Work</a>
@@ -125,17 +125,7 @@
             <span class="clock" id="clock"></span>
           </div>
         </div>
-        <figure class="manifest" aria-label="Profile summary as a Kubernetes-style manifest">
-          <div class="manifest-bar">
-            <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="manifest-file">engineer.yaml</span>
-            <button class="manifest-copy" id="manifest-copy" type="button">Copy</button>
-          </div>
-          <pre><code id="manifest"></code></pre>
-        </figure>
-      </div>
-      <div class="wrap">
-        <dl class="stats" id="stats"></dl>
+        <aside class="hero-card spot" id="hero-card" aria-label="Current role"></aside>
       </div>
     </section>
 
@@ -151,7 +141,6 @@
             <span class="about-kicker">Introduction</span>
           </div>
           <p class="lede" id="about-lede" lang="en"></p>
-          <div class="about-notes" id="about-notes"></div>
         </div>
         <aside class="glance spot" aria-labelledby="glance-title">
           <div class="glance-head">
@@ -214,8 +203,7 @@
         <p class="label"><span class="idx">04</span> Skills</p>
         <h2>What I build platforms with.</h2>
       </header>
-      <div class="bento" id="bento"></div>
-      <p class="bento-key" id="bento-key"></p>
+      <div class="skills-list" id="skills-list"></div>
       <div class="certs-wall" id="certs">
         <div class="certs-head">
           <h3 class="sub-label">Certifications</h3>
@@ -280,9 +268,10 @@
             </div>
           </div>
           <div class="cf-field">
-            <textarea id="f-msg" name="message" rows="4" required placeholder=" "></textarea>
+            <textarea id="f-msg" name="message" rows="4" required placeholder=" " aria-describedby="cf-hint"></textarea>
             <label for="f-msg">Message</label>
           </div>
+          <p class="cf-hint" id="cf-hint" aria-live="polite"></p>
           <p class="form-error" id="form-error" role="alert" hidden></p>
           <button class="btn primary cf-send" type="submit">Send message <span aria-hidden="true">→</span></button>
           <p class="cf-note" id="compose-out" role="status" aria-live="polite">Opens your email app with the message ready. Nothing is stored on this site.</p>
@@ -292,26 +281,9 @@
   </main>
 
   <footer class="footer">
-    <div class="wrap">
-      <div class="footer-row">
-        <a href="#top" class="footer-brand">
-          <span class="brand-avatar" aria-hidden="true"><img src="photo.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"></span>
-          <span><b id="footer-name"></b><span class="footer-role" id="footer-role"></span></span>
-        </a>
-        <nav class="footer-nav" aria-label="Footer">
-          <a href="#about">About</a>
-          <a href="#work">Work</a>
-          <a href="#experience">Experience</a>
-          <a href="#skills">Skills</a>
-          <a href="#contact">Contact</a>
-        </nav>
-        <div class="footer-social" id="footer-social"></div>
-      </div>
-      <div class="footer-bottom">
-        <span id="footer-text"></span>
-        <span id="footer-location"></span>
-        <a href="#top" class="to-top">Back to top ↑</a>
-      </div>
+    <div class="wrap footer-bottom">
+      <span><span id="footer-text"></span><span class="footer-sep" aria-hidden="true"> · </span><time id="footer-updated"></time></span>
+      <a href="#top" class="to-top">Back to top ↑</a>
     </div>
   </footer>
 
@@ -331,6 +303,11 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <a class="top-fab" id="top-fab" href="#top" aria-label="Back to top" tabindex="-1">
+    <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="fab-track" cx="22" cy="22" r="20"/><circle class="fab-ring" id="top-ring" cx="22" cy="22" r="20" pathLength="1"/></svg>
+    <svg class="fab-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg>
+  </a>
+
   <noscript>
     <div class="wrap noscript">
       <h1>Sri Balaji</h1>
@@ -339,7 +316,7 @@
     </div>
   </noscript>
 
-  <script src="content.js?v=62"></script>
-  <script src="app.js?v=62"></script>
+  <script src="content.js?v=74"></script>
+  <script src="app.js?v=74"></script>
 </body>
 </html>
