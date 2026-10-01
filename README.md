@@ -41,3 +41,16 @@ and loads no third-party script: the site sends GoatCounter one small request it
   `copy-email`, `contact-form-sent`.
 - **Exclude yourself:** open the site once with `?me=1` on each of your devices (`?me=0` undoes it).
 - On `localhost` nothing is sent; events are logged to the browser console instead.
+
+### Private dashboard
+
+`/visitors/` is a private dashboard (not linked anywhere, `noindex`). It contains no data: it unlocks with a
+GoatCounter API key (Export permission) that is kept only in that browser, and pulls GoatCounter's export API
+directly. Requires **Individual pageviews** to be enabled in GoatCounter.
+
+- **People:** create a personal link per person (random `?ref=` code). Names stay in that browser; use
+  Download / Restore backup to move the list between devices.
+- **Visits:** each visit with name and company for personal links, plus location, device, source, sections read,
+  time on site and contact actions. Bots are removed.
+- Opening the dashboard on a device also stops that device's visits being counted.
+- `/visitors/?demo` shows it with made-up sample data.

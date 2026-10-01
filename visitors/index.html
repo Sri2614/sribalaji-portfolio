@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Visitors</title>
+  <!-- Private dashboard. Holds no data: it unlocks only with a GoatCounter API key kept in this browser. -->
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f7a55'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%2393e2c3'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #f7f5f0; --surface: #ffffff; --surface-2: #f0ece4; --text: #15141a; --muted: #55524b; --faint: #6b675f;
+      --border: #e6e1d6; --border-strong: #d4cdbf; --accent: #0f7a55; --accent-glow: #3fbf8f; --accent-ink: #ffffff;
+      --hot: #a34e25; --danger: #b42318;
+      --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0c0e; --surface: #131418; --surface-2: #181a1f; --text: #eeeae2; --muted: #aba69c; --faint: #918c82;
+        --border: #25262b; --border-strong: #33343b; --accent: #5cc9a0; --accent-glow: #93e2c3; --accent-ink: #04130d;
+        --hot: #e8956a; --danger: #f97066;
+      }
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+    main { max-width: 920px; margin: 0 auto; padding: 28px 16px 80px; }
+    h1 { font-size: 1.7rem; letter-spacing: -0.02em; margin: 0; }
+    h2 { font-size: 1.05rem; margin: 0 0 12px; }
+    .muted { color: var(--muted); } .faint { color: var(--faint); }
+    .mono { font-family: var(--mono); }
+    button, input, select { font: inherit; color: inherit; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 16px;
+      border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); cursor: pointer; font-weight: 600; font-size: 0.9rem;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn.primary { background: linear-gradient(135deg, var(--accent-glow), var(--accent)); color: var(--accent-ink); border-color: transparent; }
+    .btn.ghost { background: none; }
+    .btn.small { min-height: 32px; padding: 4px 12px; font-size: 0.82rem; }
+    .btn:disabled { opacity: 0.6; cursor: progress; }
+    input[type=text], input[type=password], select {
+      width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--surface-2);
+    }
+    input:focus-visible, select:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    label { display: grid; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
+
+    /* Lock screen */
+    .lock { max-width: 460px; margin: 10vh auto 0; display: grid; gap: 16px; }
+    .lock .card { display: grid; gap: 14px; }
+    .check { display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--muted); }
+    .error { color: var(--danger); font-size: 0.9rem; margin: 0; }
+    .steps { margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.9rem; }
+
+    /* App */
+    .top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .top .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .status-line { font-size: 0.85rem; color: var(--faint); }
+    .demo-banner { padding: 10px 14px; border-radius: 12px; margin-bottom: 16px; font-size: 0.9rem; border: 1px dashed var(--hot); color: var(--hot); }
+    .tabs { display: inline-flex; padding: 4px; gap: 4px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); margin-bottom: 18px; }
+    .tabs button { border: 0; background: none; padding: 7px 16px; border-radius: 999px; cursor: pointer; font-weight: 600; color: var(--muted); min-height: 36px; }
+    .tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; font-size: 0.85rem; color: var(--muted); }
+    .stat b { display: block; font-size: 1.6rem; color: var(--text); letter-spacing: -0.02em; }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+    .chip { border: 1px solid var(--border-strong); background: none; border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--muted); min-height: 36px; }
+    .chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+    .filters select { width: auto; min-height: 36px; padding: 4px 10px; border-radius: 999px; margin-left: auto; }
+
+    .visit { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; margin: 10px 0; }
+    .visit.known { border-color: color-mix(in srgb, var(--accent) 60%, var(--border)); box-shadow: inset 3px 0 0 var(--accent); }
+    .visit-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin-bottom: 10px; }
+    .who { font-weight: 700; font-size: 1.05rem; }
+    .who.anon { color: var(--muted); font-weight: 600; }
+    .co { color: var(--accent); font-weight: 600; }
+    .when { margin-left: auto; color: var(--faint); font-size: 0.85rem; }
+    .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px 16px; margin: 0 0 10px; }
+    .facts dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); }
+    .facts dd { margin: 0; font-size: 0.92rem; overflow-wrap: anywhere; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+    .tag { font-size: 0.78rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--hot); color: var(--hot); }
+    .timeline { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--border); }
+    .timeline li { padding: 2px 0 2px 12px; font-size: 0.9rem; }
+    .timeline time { color: var(--faint); font-variant-numeric: tabular-nums; margin-right: 10px; font-family: var(--mono); font-size: 0.82rem; }
+    .empty { text-align: center; padding: 40px 16px; color: var(--muted); }
+
+    .add { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; align-items: end; }
+    .newlink { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 10%, var(--surface-2)); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .newlink code { font-family: var(--mono); font-size: 0.85rem; overflow-wrap: anywhere; flex: 1; min-width: 0; }
+    .people { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .people th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); padding: 8px; border-bottom: 1px solid var(--border); }
+    .people td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 0.92rem; }
+    .people td.actions { white-space: nowrap; text-align: right; }
+    .opened { color: var(--accent); font-weight: 600; }
+    .backup { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; align-items: center; }
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 0.9rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 640px) {
+      .add { grid-template-columns: 1fr; }
+      .people thead { display: none; }
+      .people tr { display: grid; grid-template-columns: 1fr auto; padding: 10px 0; border-bottom: 1px solid var(--border); }
+      .people td { border: 0; padding: 2px 0; }
+      .people td.actions { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+      .when { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <!-- Locked -->
+  <section class="lock" id="lock" hidden>
+    <div>
+      <h1>Visitors</h1>
+      <p class="muted">Private dashboard. Enter your GoatCounter API key to unlock it on this device.</p>
+    </div>
+    <form class="card" id="unlock-form" autocomplete="off">
+      <label>GoatCounter API key
+        <input type="password" id="key-input" required spellcheck="false" autocomplete="off">
+      </label>
+      <label class="check"><input type="checkbox" id="remember" checked> Remember on this device</label>
+      <p class="error" id="unlock-error" role="alert" hidden></p>
+      <button class="btn primary" type="submit" id="unlock-btn">Unlock</button>
+    </form>
+    <details class="card">
+      <summary><b>Where do I get a key?</b></summary>
+      <ol class="steps">
+        <li>In GoatCounter: <b>Settings → Site settings</b>, turn on <b>Individual pageviews</b> (only visits after that are shown).</li>
+        <li>Click your name (top right) → <b>API</b> → create a key with the <b>Export</b> permission.</li>
+        <li>Paste it above. It stays in this browser only.</li>
+      </ol>
+    </details>
+  </section>
+
+  <!-- Unlocked -->
+  <section id="app" hidden>
+    <div class="top">
+      <div>
+        <h1>Visitors</h1>
+        <div class="status-line" id="status-line" aria-live="polite"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="refresh-btn" type="button">Refresh</button>
+        <button class="btn ghost" id="lock-btn" type="button">Lock</button>
+      </div>
+    </div>
+    <div class="demo-banner" id="demo-banner" hidden>Demo mode: made-up sample data, nothing is saved.</div>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-visits" aria-selected="true" aria-controls="panel-visits">Visits</button>
+      <button role="tab" id="tab-people" aria-selected="false" aria-controls="panel-people">People</button>
+    </div>
+
+    <div id="panel-visits" role="tabpanel" aria-labelledby="tab-visits">
+      <div class="stats" id="stats"></div>
+      <div class="filters">
+        <button class="chip" data-filter="all" aria-pressed="true">All visits</button>
+        <button class="chip" data-filter="known" aria-pressed="false">People I sent a link to</button>
+        <button class="chip" data-filter="intent" aria-pressed="false">Showed contact intent</button>
+        <select id="range" aria-label="Period">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last year</option>
+        </select>
+      </div>
+      <div id="visits"></div>
+    </div>
+
+    <div id="panel-people" role="tabpanel" aria-labelledby="tab-people" hidden>
+      <form class="card" id="add-form" autocomplete="off">
+        <h2>Send your portfolio to someone</h2>
+        <div class="add">
+          <label>Name <input type="text" id="p-name" required placeholder="Jan de Vries"></label>
+          <label>Company <input type="text" id="p-company" required placeholder="Adyen"></label>
+          <label>Role <input type="text" id="p-role" placeholder="Tech recruiter"></label>
+          <button class="btn primary" type="submit">Create link</button>
+        </div>
+        <div class="newlink" id="newlink" hidden>
+          <code id="newlink-url"></code>
+          <button class="btn small" type="button" id="newlink-copy">Copy</button>
+        </div>
+      </form>
+      <div class="card" style="margin-top:14px">
+        <h2>Everyone you've sent a link to</h2>
+        <p class="faint" style="margin:0 0 6px;font-size:.85rem">Names stay in this browser only. GoatCounter only ever sees the random code.</p>
+        <table class="people">
+          <thead><tr><th>Person</th><th>Sent</th><th>Status</th><th></th></tr></thead>
+          <tbody id="people-rows"></tbody>
+        </table>
+        <p class="empty" id="people-empty" hidden>No links yet. Create one above.</p>
+        <div class="backup">
+          <span class="faint" style="font-size:.85rem">Move the list to another device:</span>
+          <button class="btn small" type="button" id="export-btn">Download backup</button>
+          <label class="btn small" style="display:inline-flex;color:inherit">Restore backup<input type="file" id="import-input" accept="application/json" hidden></label>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+  var SITE = "sribalaji";
+  var API = "https://" + SITE + ".goatcounter.com/api/v0";
+  var PORTFOLIO = "https://sri2614.github.io/sribalaji-portfolio/";
+  var TZ = "Europe/Amsterdam";
+  var SESSION_GAP = 45 * 60 * 1000;
+  var KEEP_DAYS = 400;
+  var DEMO = new URLSearchParams(location.search).has("demo");
+
+  var LABELS = {
+    "read-about": "Read About", "read-work": "Read Selected work", "read-experience": "Read Experience",
+    "read-skills": "Read Skills & certifications", "read-contact": "Reached Contact",
+    "stayed-1-min": "Stayed 1+ min", "stayed-3-min": "Stayed 3+ min",
+    "click-email": "Clicked email", "click-linkedin": "Clicked LinkedIn", "click-github": "Clicked GitHub",
+    "copy-email": "Copied email address", "contact-form-sent": "Sent the contact form",
+  };
+  var INTENT = ["click-email", "click-linkedin", "copy-email", "contact-form-sent"];
+  var regionNames = typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
+  var fmtWhen = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  var fmtTime = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+  var fmtDate = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, day: "2-digit", month: "short" });
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(function () { t.classList.remove("show"); }, 2200); }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+  function sstore(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { return null; } }
+
+  // Opening this dashboard means this device is yours: stop counting its visits to the portfolio.
+  store("no-analytics", "1");
+
+  // ---------- state ----------
+  var people = DEMO ? demoPeople() : JSON.parse(store("gc-people") || "[]");
+  var cache = DEMO ? { rows: demoRows(), lastHitId: 0, updated: Date.now() } : JSON.parse(store("gc-cache") || '{"rows":[],"lastHitId":0,"updated":0}');
+  var filter = "all";
+  function savePeople() { if (!DEMO) store("gc-people", JSON.stringify(people)); }
+  function saveCache() {
+    if (DEMO) return;
+    var cutoff = Date.now() - KEEP_DAYS * 864e5;
+    cache.rows = cache.rows.filter(function (r) { return Date.parse(r.Date) >= cutoff; });
+    try { store("gc-cache", JSON.stringify(cache)); } catch (e) {}
+  }
+  function key() { return sstore("gc-key") || store("gc-key"); }
+
+  // ---------- GoatCounter API ----------
+  function api(method, path, body) {
+    return fetch(API + path, {
+      method: method, cache: "no-store",
+      headers: { "Authorization": "Bearer " + key(), "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    }).then(function (r) {
+      if (r.status === 401) throw new Error("That API key isn't valid (or was deleted).");
+      if (r.status === 403) throw new Error("This key needs the Export permission in GoatCounter.");
+      if (!r.ok) return r.text().then(function (t) { throw new Error("GoatCounter said: " + (t || r.status)); });
+      return r;
+    });
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function gunzipIfNeeded(buf) {
+    var b = new Uint8Array(buf);
+    if (b[0] === 0x1f && b[1] === 0x8b && "DecompressionStream" in window) {
+      return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    }
+    return Promise.resolve(new TextDecoder().decode(buf));
+  }
+  function fetchNewRows() {
+    var body = cache.lastHitId ? { start_from_hit_id: cache.lastHitId } : {};
+    return api("POST", "/export", body).then(function (r) { return r.json(); }).then(function (exp) {
+      var tries = 0;
+      function poll() {
+        return api("GET", "/export/" + exp.id).then(function (r) { return r.json(); }).then(function (s) {
+          if (s.finished_at) return s;
+          if (++tries > 40) throw new Error("GoatCounter's export is taking long. Try Refresh in a minute.");
+          return sleep(1500).then(poll);
+        });
+      }
+      return poll();
+    }).then(function (done) {
+      return api("GET", "/export/" + done.id + "/download")
+        .then(function (r) { return r.arrayBuffer(); })
+        .then(gunzipIfNeeded)
+        .then(function (text) { return { rows: parseCsv(text), lastHitId: done.last_hit_id || cache.lastHitId }; });
+    });
+  }
+
+  // ---------- CSV ----------
+  function csvRows(text) {
+    var rows = [], row = [], f = "", q = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(f); f = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+      else f += ch;
+    }
+    if (f || row.length) { row.push(f); rows.push(row); }
+    return rows.filter(function (r) { return r.length > 1 || r[0]; });
+  }
+  function parseCsv(text) {
+    var rows = csvRows(text);
+    if (!rows.length) return [];
+    var header = rows[0].slice();
+    // The header starts with the export format version: "2Path", "2,Path" in one cell, or "2" as its own column.
+    var first = header[0].replace(/^[\d,]+/, "");
+    if (first) header[0] = first; else header.shift();
+    return rows.slice(1).map(function (r) {
+      if (r.length === header.length + 1) r = r.slice(1);
+      var o = {};
+      header.forEach(function (h, i) { o[h] = r[i] || ""; });
+      return o;
+    });
+  }
+  function rowKey(r) { return [r.Date, r.Session, r.Path, r.Event].join("|"); }
+
+  // ---------- visits ----------
+  function isEvent(r) { return /^(true|1|t|yes)$/i.test(r.Event || ""); }
+  function isBot(r) { return (r.Bot || "0") !== "0" && r.Bot !== ""; }
+  function eventName(r) { return (r.Path || "").replace(/^\/+|\/+$/g, ""); }
+  function buildVisits(days) {
+    var since = Date.now() - days * 864e5;
+    var byCode = {};
+    people.forEach(function (p) { byCode[p.code] = p; });
+    var hits = cache.rows.filter(function (r) { return r.Date && !isBot(r); })
+      .map(function (r) { return Object.assign({ _t: Date.parse(r.Date) }, r); })
+      .filter(function (r) { return r._t >= since; })
+      .sort(function (a, b) { return a._t - b._t; });
+    var visits = [], open = {};
+    hits.forEach(function (h) {
+      var sid = h.Session || ("x" + h._t);
+      var v = open[sid];
+      if (!v || h._t - v.end > SESSION_GAP) { v = { start: h._t, end: h._t, hits: [] }; visits.push(v); open[sid] = v; }
+      v.hits.push(h); v.end = h._t;
+    });
+    visits.forEach(function (v) {
+      var refs = v.hits.map(function (h) { return (h.Referrer || "").trim(); }).filter(Boolean);
+      v.ref = refs[0] || "";
+      v.person = null;
+      refs.some(function (r) { var p = byCode[r.toLowerCase()]; if (p) v.person = p; return !!p; });
+      v.location = (v.hits.find(function (h) { return h.Location; }) || {}).Location || "";
+      var f = v.hits[0];
+      v.browser = f.Browser || ""; v.system = f.System || ""; v.screen = f["Screen size"] || "";
+      v.firstVisit = v.hits.some(function (h) { return /^(true|1|t)$/i.test(h.FirstVisit || ""); });
+      v.events = v.hits.filter(isEvent);
+      var names = v.events.map(eventName);
+      v.intent = INTENT.filter(function (i) { return names.indexOf(i) > -1; });
+      v.minutes = names.indexOf("stayed-3-min") > -1 ? "3+ min" : names.indexOf("stayed-1-min") > -1 ? "1–3 min" : "Under 1 min";
+    });
+    return visits.reverse();
+  }
+  function locationLabel(code) {
+    if (!code) return "Unknown";
+    var parts = code.split("-"), name = parts[0];
+    try { if (regionNames) name = regionNames.of(parts[0]) || parts[0]; } catch (e) {}
+    return parts[1] ? name + " (" + parts[1] + ")" : name;
+  }
+  function deviceLabel(v) {
+    var w = parseInt((v.screen || "").split(",")[0], 10);
+    var kind = !w ? "" : w < 600 ? "Phone" : w < 1024 ? "Tablet" : "Desktop";
+    return [kind, v.browser, v.system].filter(Boolean).join(" · ") || "Unknown";
+  }
+  function sourceLabel(v) {
+    if (v.person) return "Their personal link";
+    if (!v.ref) return "Direct (typed, bookmark or app)";
+    return v.ref;
+  }
+
+  // ---------- render ----------
+  function renderVisits() {
+    var days = +$("range").value;
+    var all = buildVisits(days);
+    var known = all.filter(function (v) { return v.person; });
+    var stats = $("stats"); stats.textContent = "";
+    [[all.length, "visits"], [known.length, "from people you sent a link to"],
+     [all.filter(function (v) { return v.intent.length; }).length, "showed contact intent"],
+     [new Set(all.map(function (v) { return v.location.split("-")[0]; }).filter(Boolean)).size, "countries"]]
+      .forEach(function (s) { var d = el("div", "stat"); d.appendChild(el("b", "", String(s[0]))); d.appendChild(document.createTextNode(s[1])); stats.appendChild(d); });
+
+    var list = filter === "known" ? known : filter === "intent" ? all.filter(function (v) { return v.intent.length; }) : all;
+    var box = $("visits"); box.textContent = "";
+    if (!list.length) {
+      box.appendChild(el("div", "empty card", cache.rows.length ? "No visits match this filter in this period." :
+        "No visit data yet. Make sure Individual pageviews is on in GoatCounter, then press Refresh."));
+      return;
+    }
+    list.forEach(function (v) {
+      var card = el("article", "visit" + (v.person ? " known" : ""));
+      var head = el("div", "visit-head");
+      if (v.person) {
+        head.appendChild(el("span", "who", v.person.name));
+        head.appendChild(el("span", "co", v.person.company + (v.person.role ? " · " + v.person.role : "")));
+      } else head.appendChild(el("span", "who anon", "Unknown visitor"));
+      head.appendChild(el("span", "when", fmtWhen.format(v.start)));
+      card.appendChild(head);
+      var dl = el("dl", "facts");
+      [["Where", locationLabel(v.location)], ["Device", deviceLabel(v)], ["Came from", sourceLabel(v)],
+       ["Time on site", v.minutes], ["Visitor", v.firstVisit ? "New" : "Returning"]].forEach(function (f) {
+        var d = el("div"); d.appendChild(el("dt", "", f[0])); d.appendChild(el("dd", "", f[1])); dl.appendChild(d);
+      });
+      card.appendChild(dl);
+      if (v.intent.length) {
+        var tags = el("div", "tags");
+        v.intent.forEach(function (i) { tags.appendChild(el("span", "tag", LABELS[i])); });
+        card.appendChild(tags);
+      }
+      if (v.events.length) {
+        var ol = el("ol", "timeline");
+        v.events.forEach(function (h) {
+          var li = el("li"); li.appendChild(el("time", "", fmtTime.format(h._t)));
+          li.appendChild(document.createTextNode(LABELS[eventName(h)] || h.Title || eventName(h)));
+          ol.appendChild(li);
+        });
+        card.appendChild(ol);
+      } else card.appendChild(el("p", "faint", "Opened the page; no sections read."));
+      box.appendChild(card);
+    });
+  }
+
+  function linkFor(p) { return PORTFOLIO + "?ref=" + p.code; }
+  function renderPeople() {
+    var tbody = $("people-rows"); tbody.textContent = "";
+    $("people-empty").hidden = people.length > 0;
+    var visits = buildVisits(KEEP_DAYS);
+    people.slice().reverse().forEach(function (p) {
+      var mine = visits.filter(function (v) { return v.person && v.person.code === p.code; });
+      var tr = el("tr");
+      var who = el("td"); who.appendChild(el("b", "", p.name)); who.appendChild(document.createTextNode(" · " + p.company));
+      if (p.role) { who.appendChild(el("br")); who.appendChild(el("span", "faint", p.role)); }
+      tr.appendChild(who);
+      tr.appendChild(el("td", "faint", p.sent ? fmtDate.format(Date.parse(p.sent)) : ""));
+      tr.appendChild(el("td", mine.length ? "opened" : "faint",
+        mine.length ? "Opened " + mine.length + "× · last " + fmtWhen.format(mine[0].start) : "Not opened yet"));
+      var act = el("td", "actions");
+      var copyBtn = el("button", "btn small", "Copy link"); copyBtn.type = "button";
+      copyBtn.addEventListener("click", function () { copy(linkFor(p)); });
+      var del = el("button", "btn small ghost", "Remove"); del.type = "button";
+      del.addEventListener("click", function () {
+        if (!confirm("Remove " + p.name + " from your list? Their link keeps working, but visits won't show their name.")) return;
+        people = people.filter(function (x) { return x.code !== p.code; }); savePeople(); renderAll();
+      });
+      act.appendChild(copyBtn); act.appendChild(document.createTextNode(" ")); act.appendChild(del);
+      tr.appendChild(act);
+      tbody.appendChild(tr);
+    });
+  }
+  function renderStatus(msg) {
+    $("status-line").textContent = msg || (cache.updated ? "Updated " + fmtWhen.format(cache.updated) + " · " + cache.rows.length + " records" : "Not loaded yet");
+  }
+  function renderAll() { renderVisits(); renderPeople(); renderStatus(); }
+
+  function copy(text) {
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { toast("Link copied"); }, function () { prompt("Copy this link:", text); });
+  }
+
+  // ---------- actions ----------
+  function refresh() {
+    if (DEMO) { toast("Demo mode: nothing to refresh"); return Promise.resolve(); }
+    var btn = $("refresh-btn"); btn.disabled = true; renderStatus("Fetching from GoatCounter…");
+    return fetchNewRows().then(function (res) {
+      var seen = {};
+      cache.rows.forEach(function (r) { seen[rowKey(r)] = true; });
+      var added = res.rows.filter(function (r) { return !seen[rowKey(r)]; });
+      cache.rows = cache.rows.concat(added);
+      cache.lastHitId = res.lastHitId; cache.updated = Date.now();
+      saveCache(); renderAll();
+      toast(added.length ? added.length + " new records" : "Up to date");
+    }).catch(function (e) { renderStatus(e.message); toast(e.message); throw e; })
+      .finally(function () { btn.disabled = false; });
+  }
+  function showApp() { $("lock").hidden = true; $("app").hidden = false; $("demo-banner").hidden = !DEMO; renderAll(); }
+  function showLock() { $("app").hidden = true; $("lock").hidden = false; $("key-input").focus(); }
+
+  $("unlock-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var k = $("key-input").value.trim(), err = $("unlock-error"), btn = $("unlock-btn");
+    if (!k) return;
+    btn.disabled = true; err.hidden = true;
+    sstore("gc-key", k);
+    api("GET", "/me").then(function () {
+      if ($("remember").checked) store("gc-key", k);
+      $("key-input").value = "";
+      showApp();
+      return refresh().catch(function () {});
+    }).catch(function (ex) {
+      sstore("gc-key", null);
+      err.textContent = ex.message === "Failed to fetch" ? "Couldn't reach GoatCounter. Check your connection." : ex.message;
+      err.hidden = false;
+    }).finally(function () { btn.disabled = false; });
+  });
+  $("lock-btn").addEventListener("click", function () {
+    if (!confirm("Lock and forget the API key on this device? Your people list stays.")) return;
+    store("gc-key", null); sstore("gc-key", null); showLock();
+  });
+  $("refresh-btn").addEventListener("click", function () { refresh().catch(function () {}); });
+  $("range").addEventListener("change", renderVisits);
+  document.querySelectorAll(".chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      filter = c.dataset.filter;
+      document.querySelectorAll(".chip").forEach(function (x) { x.setAttribute("aria-pressed", String(x === c)); });
+      renderVisits();
+    });
+  });
+  ["visits", "people"].forEach(function (t) {
+    $("tab-" + t).addEventListener("click", function () {
+      ["visits", "people"].forEach(function (x) { $("tab-" + x).setAttribute("aria-selected", String(x === t)); $("panel-" + x).hidden = x !== t; });
+    });
+  });
+
+  $("add-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var alphabet = "abcdefghjkmnpqrstuvwxyz23456789", code;
+    do {
+      var bytes = crypto.getRandomValues(new Uint8Array(5));
+      code = Array.prototype.map.call(bytes, function (b) { return alphabet[b % alphabet.length]; }).join("");
+    } while (people.some(function (p) { return p.code === code; }));
+    var p = { code: code, name: $("p-name").value.trim(), company: $("p-company").value.trim(), role: $("p-role").value.trim(), sent: new Date().toISOString() };
+    people.push(p); savePeople();
+    $("newlink-url").textContent = linkFor(p);
+    $("newlink").hidden = false;
+    $("add-form").reset();
+    renderPeople();
+    copy(linkFor(p));
+  });
+  $("newlink-copy").addEventListener("click", function () { copy($("newlink-url").textContent); });
+
+  $("export-btn").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify({ version: 1, people: people }, null, 2)], { type: "application/json" });
+    var a = el("a"); a.href = URL.createObjectURL(blob); a.download = "portfolio-people-backup.json"; a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+  $("import-input").addEventListener("change", function (e) {
+    var file = e.target.files[0]; if (!file) return;
+    file.text().then(function (t) {
+      var data = JSON.parse(t), added = 0;
+      (data.people || []).forEach(function (p) {
+        if (p && /^[a-z0-9]{3,40}$/.test(p.code) && !people.some(function (x) { return x.code === p.code; })) {
+          people.push({ code: p.code, name: String(p.name || ""), company: String(p.company || ""), role: String(p.role || ""), sent: String(p.sent || "") });
+          added++;
+        }
+      });
+      savePeople(); renderAll(); toast(added + " people added");
+    }).catch(function () { toast("That file isn't a backup from this page"); });
+    e.target.value = "";
+  });
+
+  // ---------- demo data (?demo) ----------
+  function demoPeople() {
+    var d = function (n) { return new Date(Date.now() - n * 864e5).toISOString(); };
+    return [
+      { code: "k7f2q", name: "Jan de Vries", company: "Adyen", role: "Tech recruiter", sent: d(3) },
+      { code: "m3x8p", name: "Eva Jansen", company: "ING", role: "Engineering manager", sent: d(2) },
+      { code: "r9t4w", name: "Pieter Bakker", company: "Booking.com", role: "Head of Platform", sent: d(6) },
+    ];
+  }
+  function demoRows() {
+    var rows = [];
+    function add(minsAgo, path, ev, sess, ref, loc, browser, system, screen, first) {
+      rows.push({ Path: path, Title: "", Event: ev ? "true" : "false", Browser: browser, System: system, Session: sess, Bot: "0",
+        Referrer: ref, "Screen size": screen, Location: loc, FirstVisit: first ? "true" : "false", Date: new Date(Date.now() - minsAgo * 6e4).toISOString() });
+    }
+    var j = 60 * 26;
+    add(j, "/sribalaji-portfolio/", 0, "a", "k7f2q", "NL-NH", "Chrome 140", "macOS 15", "1512,982,2", 1);
+    [["read-about", 1], ["read-experience", 2.5], ["read-work", 4], ["stayed-3-min", 3.2], ["click-linkedin", 6]].forEach(function (e) { add(j - e[1], e[0], 1, "a", "k7f2q", "NL-NH", "Chrome 140", "macOS 15", "1512,982,2"); });
+    var p = 60 * 5;
+    add(p, "/sribalaji-portfolio/", 0, "b", "r9t4w", "NL-NH", "Safari 18", "iOS 18", "390,844,3", 1);
+    [["read-about", 0.6], ["read-work", 1.8], ["stayed-1-min", 1.1], ["copy-email", 2.4]].forEach(function (e) { add(p - e[1], e[0], 1, "b", "r9t4w", "NL-NH", "Safari 18", "iOS 18", "390,844,3"); });
+    add(40, "/sribalaji-portfolio/", 0, "c", "linkedin.com", "DE-BE", "Firefox 131", "Windows 11", "1920,1080,1", 1);
+    add(39, "read-skills", 1, "c", "linkedin.com", "DE-BE", "Firefox 131", "Windows 11", "1920,1080,1");
+    add(12, "/sribalaji-portfolio/", 0, "d", "", "NL-UT", "Edge 140", "Windows 11", "1440,900,1", 0);
+    add(30, "/sribalaji-portfolio/", 0, "e", "", "US", "HeadlessChrome", "Linux", "800,600,1", 1);
+    rows[rows.length - 1].Bot = "150";
+    return rows;
+  }
+
+  // ---------- start ----------
+  if (DEMO || key()) {
+    showApp();
+    if (!DEMO && Date.now() - cache.updated > 5 * 60 * 1000) refresh().catch(function () {});
+  } else showLock();
+})();
+</script>
+</body>
+</html>
