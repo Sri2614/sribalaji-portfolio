@@ -6,7 +6,10 @@ window.CONTENT = {
   tagline: "I design and run the platforms regulated banks build on: secure-by-default Kubernetes, delivery pipelines that satisfy auditors, and the guardrails that let many product teams ship safely. I lead modernisation programmes and advise banks on their cloud strategy.",
   location: "Almere, Netherlands",
   timeZone: "Europe/Amsterdam",
+  // Job-search details (availability, permit transfer, the 90-day plan) show only to visitors who arrive
+  // through a personal ?ref= link. Everyone else, including colleagues and search engines, sees `status`.
   availability: "Open to senior, staff & principal platform roles · Netherlands",
+  status: "Platform engineering for regulated banking · Almere, NL",
   email: "sribalaji2614@gmail.com",
   photo: "photo.jpg",
   cv: null, // e.g. "SriBalaji-CV.pdf": set a file name to show Download CV buttons
@@ -33,6 +36,8 @@ window.CONTENT = {
     "  platforms: [aks, eks, openshift]",
     "  delivery: [terraform, gitops, argocd]",
     "  security: [policy-as-code, entra-id, rbac]",
+  ],
+  manifestOpen: [
     "status:",
     "  openToWork: true",
     "  workPermit: nl-hsm  # transferable",
@@ -40,7 +45,7 @@ window.CONTENT = {
 
   stats: [
     { value: "7+", label: "years building cloud platforms" },
-    { value: "11", label: "industry certifications" },
+    { value: "7", label: "professional certifications" },
     { value: "AKS + EKS", label: "Kubernetes platforms I run in production" },
   ],
 
@@ -115,6 +120,29 @@ window.CONTENT = {
       stack: ["Terraform", "AWS", "KMS", "GitLab CI"],
     },
   ],
+
+  // A starting plan, not a template: the specifics come from the team. Each point reflects how I already work (see the CV).
+  first90: {
+    title: "My first 90 days on your platform team.",
+    intro: "How I would start. The specifics come from your teams, not from a template.",
+    phases: [
+      { when: "Days 1–30", title: "Listen and map", points: [
+        "Meet product teams, security and operations to learn where delivery hurts today.",
+        "Map how a change really reaches production, including the manual steps and the waiting.",
+        "Read the incident history, audit findings and on-call load before proposing anything.",
+      ] },
+      { when: "Days 31–60", title: "Earn trust with quick wins", points: [
+        "Remove one or two frictions teams feel every day, like a slow pipeline stage or a manual access request.",
+        "Move a first piece of the path to code and GitOps, so it becomes reviewable and repeatable.",
+        "Agree SLOs and alerting for one critical service with the team that owns it.",
+      ] },
+      { when: "Days 61–90", title: "Set direction", points: [
+        "Propose a platform roadmap tied to what teams and auditors need, with the trade-offs made explicit.",
+        "Add security checks to the path where they are missing, as gates rather than reviews.",
+        "Start knowledge sharing through workshops and docs, so the platform never depends on one person.",
+      ] },
+    ],
+  },
 
   workshops: [
     { type: "Workshop", icon: "terminal", title: "Integrating Azure AD with ArgoCD ApplicationSets on AWS EKS",
@@ -222,7 +250,7 @@ window.CONTENT = {
       evidence: "Cloud-native Java services and event-driven processing." },
   ],
 
-  // Every certification on the CV, grouped so the strongest lead. `year` only where the CV states one.
+  // Exam-based certifications from the CV, grouped so the strongest lead. `year` only where the CV states one.
   certifications: [
     { group: "Cloud & platform", items: [
       { issuer: "AWS", name: "Solutions Architect – Associate", short: "Solutions Architect", tier: "Associate" },
@@ -230,16 +258,18 @@ window.CONTENT = {
       { issuer: "HashiCorp", name: "Terraform Associate", short: "Terraform", tier: "Associate" },
       { issuer: "CNCF", name: "Kubernetes and Cloud Native Associate (KCNA)", short: "Kubernetes & Cloud Native", tier: "KCNA" },
     ] },
-    { group: "AI engineering", items: [
-      { issuer: "Anthropic", name: "Claude Code in Action", tier: "2026", year: 2026 },
-      { issuer: "Anthropic", name: "Claude Code 101", tier: "2026", year: 2026 },
-      { issuer: "LinkedIn", name: "AI Evaluations for Product Leaders and AI PMs", short: "AI Evaluations", tier: "2026", year: 2026 },
-      { issuer: "LinkedIn", name: "Prompt Engineering: How to Talk to the AIs", short: "Prompt Engineering", tier: "2026", year: 2026 },
-    ] },
     { group: "Foundations", items: [
       { issuer: "Microsoft", name: "Azure Fundamentals", short: "Azure", tier: "Fundamentals" },
       { issuer: "Microsoft", name: "Azure Data Fundamentals", short: "Azure Data", tier: "Fundamentals" },
       { issuer: "Oracle", name: "Oracle Cloud Infrastructure Foundations Associate", short: "OCI Foundations", tier: "2020", year: 2020 },
     ] },
+  ],
+
+  // Course completions from the CV: listed as learning, not as certifications.
+  learning: [
+    { issuer: "Anthropic", name: "Claude Code in Action", year: 2026 },
+    { issuer: "Anthropic", name: "Claude Code 101", year: 2026 },
+    { issuer: "LinkedIn Learning", name: "AI Evaluations for Product Leaders and AI PMs", year: 2026 },
+    { issuer: "LinkedIn Learning", name: "Prompt Engineering: How to Talk to the AIs", year: 2026 },
   ],
 };

@@ -38,7 +38,7 @@
   }
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=44">
+  <link rel="stylesheet" href="styles.css?v=62">
   <script>
     // Set the theme before first paint: saved choice, else follow the OS.
     (function () {
@@ -201,7 +201,11 @@
         <p class="label"><span class="idx">03</span> Experience</p>
         <h2>From first clusters to the platforms banks run on.</h2>
       </header>
-      <ol id="timeline" class="timeline"></ol>
+      <div class="career" id="career">
+        <div class="career-bar" role="tablist" aria-label="Roles, oldest to newest" id="career-bar"></div>
+        <div class="career-axis" id="career-axis" aria-hidden="true"></div>
+        <div class="career-panels" id="career-panels"></div>
+      </div>
     </section>
 
     <!-- Skills -->
@@ -219,15 +223,29 @@
         </div>
         <ul class="hive" id="hive" aria-label="Certifications"></ul>
         <p class="hive-caption" id="hive-caption" aria-hidden="true"></p>
+        <div class="learning" id="learning" hidden>
+          <h4 class="learning-title">Recent learning</h4>
+          <ul class="learning-list" id="learning-list"></ul>
+        </div>
       </div>
     </section>
 
     <!-- Contact -->
+    <!-- First 90 days -->
+    <section class="wrap section" id="plan">
+      <header class="section-head">
+        <p class="label"><span class="idx">05</span> First 90 days</p>
+        <h2 id="plan-title"></h2>
+        <p class="section-intro" id="plan-intro"></p>
+      </header>
+      <ol class="plan" id="plan-phases"></ol>
+    </section>
+
     <section class="wrap section contact" id="contact">
       <div class="contact-bg" aria-hidden="true"></div>
       <div class="contact-grid">
         <div class="contact-copy">
-          <p class="label"><span class="idx">05</span> Contact</p>
+          <p class="label"><span class="idx">06</span> Contact</p>
           <h2 class="contact-title">Let’s build something <em>reliable</em>.</h2>
           <p class="contact-status"><span class="pulse" aria-hidden="true"></span><span id="contact-availability"></span></p>
           <div class="contact-email-row">
@@ -274,9 +292,26 @@
   </main>
 
   <footer class="footer">
-    <div class="wrap footer-inner">
-      <span id="footer-text"></span>
-      <a href="#top" class="to-top">Back to top ↑</a>
+    <div class="wrap">
+      <div class="footer-row">
+        <a href="#top" class="footer-brand">
+          <span class="brand-avatar" aria-hidden="true"><img src="photo.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"></span>
+          <span><b id="footer-name"></b><span class="footer-role" id="footer-role"></span></span>
+        </a>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="#about">About</a>
+          <a href="#work">Work</a>
+          <a href="#experience">Experience</a>
+          <a href="#skills">Skills</a>
+          <a href="#contact">Contact</a>
+        </nav>
+        <div class="footer-social" id="footer-social"></div>
+      </div>
+      <div class="footer-bottom">
+        <span id="footer-text"></span>
+        <span id="footer-location"></span>
+        <a href="#top" class="to-top">Back to top ↑</a>
+      </div>
     </div>
   </footer>
 
@@ -304,7 +339,7 @@
     </div>
   </noscript>
 
-  <script src="content.js?v=44"></script>
-  <script src="app.js?v=44"></script>
+  <script src="content.js?v=62"></script>
+  <script src="app.js?v=62"></script>
 </body>
 </html>

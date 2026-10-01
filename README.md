@@ -36,8 +36,8 @@ and loads no third-party script: the site sends GoatCounter one small request it
   (LinkedIn, Slack, WhatsApp…) never count.
 - **Per-application links:** share `https://sri2614.github.io/sribalaji-portfolio/?ref=adyen` and the visit
   shows in GoatCounter with the referrer `adyen`.
-- **Events:** `read-about`, `read-work`, `read-experience`, `read-skills`, `read-contact` (section in the middle
-  of the screen for 2 s), `stayed-1-min`, `stayed-3-min`, `click-email`, `click-linkedin`, `click-github`,
+- **Events:** `read-about`, `read-work`, `read-experience`, `read-skills`, `read-plan`, `read-contact`
+  (section in the middle of the screen for 2 s), `stayed-1-min`, `stayed-3-min`, `click-email`, `click-linkedin`, `click-github`,
   `copy-email`, `contact-form-sent`.
 - **Exclude yourself:** open the site once with `?me=1` on each of your devices (`?me=0` undoes it).
 - On `localhost` nothing is sent; events are logged to the browser console instead.

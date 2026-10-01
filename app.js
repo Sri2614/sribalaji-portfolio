@@ -64,10 +64,25 @@
     } else fallback();
   }
 
+  // ---------- Discreet mode ----------
+  // Job-search details only for people who arrive through a personal link (?ref=...); the site remembers
+  // them for 90 days. Everyone else (colleagues, search engines, link previews, the GitHub profile link)
+  // sees a neutral page. Preview it yourself with any ?ref=, e.g. ?ref=preview.
+  var openMode = (function () {
+    var ref = (new URLSearchParams(location.search).get("ref") || "").toLowerCase();
+    var viaLink = !!ref && ref !== "github";
+    try {
+      if (viaLink) localStorage.setItem("open-mode", String(Date.now()));
+      return Date.now() - (+localStorage.getItem("open-mode") || 0) < 90 * 864e5;
+    } catch (e) { return viaLink; }
+  })();
+  root.classList.toggle("open-mode", openMode);
+  var manifest = openMode ? c.manifest.concat(c.manifestOpen || []) : c.manifest;
+
   // ---------- Hero ----------
   var linkedin = c.links.filter(function (l) { return /linkedin/i.test(l.label); })[0];
   $("brand").textContent = c.name;
-  $("hero-availability").textContent = c.availability;
+  $("hero-availability").textContent = openMode ? c.availability : c.status;
   var nameEl = $("hero-name");
   nameEl.setAttribute("aria-label", c.name);
   c.name.split("").forEach(function (ch, i) {
@@ -114,7 +129,7 @@
 
   // Manifest with minimal YAML highlighting (built from DOM nodes, not HTML strings).
   var code = $("manifest");
-  c.manifest.forEach(function (line, i) {
+  manifest.forEach(function (line, i) {
     var row = el("span", { cls: "ln" });
     row.style.setProperty("--i", i);
     var m = line.match(/^(\s*)([\w.-]+)(:)(\s*)([^#]*?)(\s*)(#.*)?$/);
@@ -132,9 +147,9 @@
       if (m[7]) row.appendChild(el("span", { cls: "tk-comment", text: m[6] + m[7] }));
     }
     code.appendChild(row);
-    if (i < c.manifest.length - 1) code.appendChild(document.createTextNode("\n"));
+    if (i < manifest.length - 1) code.appendChild(document.createTextNode("\n"));
   });
-  $("manifest-copy").addEventListener("click", function () { copy(c.manifest.join("\n"), "Manifest copied"); });
+  $("manifest-copy").addEventListener("click", function () { copy(manifest.join("\n"), "Manifest copied"); });
 
   c.stats.forEach(function (s) {
     $("stats").appendChild(el("div", { cls: "stat" }, [el("dt", { text: s.label }), el("dd", { text: s.value })]));
@@ -200,7 +215,7 @@
     if (f.v) dd.appendChild(el("span", { cls: "glance-v", text: f.v }));
     if (f.sub) dd.appendChild(el("span", { cls: "glance-sub", text: f.sub }));
     if (f.clock) dd.appendChild(el("span", { cls: "glance-sub", text: "" })).id = "glance-time";
-    if (f.badge) dd.appendChild(el("span", { cls: "glance-badge", text: f.badge }));
+    if (f.badge && openMode) dd.appendChild(el("span", { cls: "glance-badge", text: f.badge }));
     if (f.langs) {
       dd.appendChild(el("ul", { cls: "langs" }, f.langs.map(function (l) {
         var kids = [el("span", { cls: "lang-name", text: l.name }), el("span", { cls: "lang-level", text: l.level })];
@@ -217,8 +232,51 @@
   });
   tick();
 
+  // Each principle gets a small illustration of what it means in practice (decorative, static; animates on hover).
+  var PRINCIPLE_VIZ = [
+    // Security is a pipeline stage: two changes reach the gate, one passes, one is stopped.
+    '<svg viewBox="0 0 240 110" aria-hidden="true">' +
+      '<path class="pv-track" d="M18 38H222M18 74H120"/>' +
+      '<path class="pv-flow" d="M18 38H222"/>' +
+      '<circle class="pv-node" cx="22" cy="38" r="5"/><circle class="pv-node" cx="22" cy="74" r="5"/>' +
+      '<g class="pv-gate" transform="translate(108 38)"><path d="M12 -20 0 -15v10c0 9 5 16 12 19 7-3 12-10 12-19v-10L12 -20Z"/><path class="pv-tick" d="m6.5 -3.5 4 4 7-7.5"/></g>' +
+      '<rect class="pv-gate-col" x="114" y="60" width="12" height="28" rx="4"/>' +
+      '<path class="pv-stop" d="m113 69 14 10M127 69l-14 10"/>' +
+      '<circle class="pv-node pv-ok" cx="218" cy="38" r="5"/>' +
+      '<text class="pv-label" x="18" y="100">change</text><text class="pv-label" x="120" y="100" text-anchor="middle">gate</text><text class="pv-label" x="222" y="100" text-anchor="end">prod</text>' +
+    '</svg>',
+    // Platforms are products: a self-service form instead of a ticket.
+    '<svg viewBox="0 0 240 110" aria-hidden="true">' +
+      '<rect class="pv-card" x="28" y="10" width="184" height="92" rx="10"/>' +
+      '<text class="pv-title" x="42" y="31">New service</text>' +
+      '<g class="pv-rows"><rect x="42" y="40" width="96" height="9" rx="4.5"/><rect x="42" y="56" width="74" height="9" rx="4.5"/><rect x="42" y="72" width="86" height="9" rx="4.5"/></g>' +
+      '<path class="pv-tick pv-check" d="m150 44.5 3.5 3.5 6-6.5M150 60.5l3.5 3.5 6-6.5M150 76.5l3.5 3.5 6-6.5"/>' +
+      '<rect class="pv-btn" x="168" y="74" width="34" height="18" rx="9"/><path class="pv-btn-arrow" d="M180 83h10m-3.5-3.5L190 83l-3.5 3.5"/>' +
+    '</svg>',
+    // Everything as code: a reviewed diff replaces a manual change.
+    '<svg viewBox="0 0 240 110" aria-hidden="true">' +
+      '<rect class="pv-card" x="20" y="12" width="200" height="86" rx="10"/>' +
+      '<text class="pv-code" x="34" y="36"><tspan class="pv-add">+</tspan> cluster  = "aks-prod"</text>' +
+      '<text class="pv-code" x="34" y="56"><tspan class="pv-add">+</tspan> policy   = "baseline"</text>' +
+      '<text class="pv-code pv-del-line" x="34" y="76"><tspan class="pv-del">-</tspan> manual   = true</text>' +
+      '<path class="pv-strike" d="M46 72.5h104"/>' +
+      '<g class="pv-git" transform="translate(186 72)"><circle cx="0" cy="-8" r="3.5"/><circle cx="0" cy="12" r="3.5"/><circle cx="14" cy="0" r="3.5"/><path d="M0 -4.5v13M14 3.5c0 5-7 5-11 7"/></g>' +
+    '</svg>',
+    // Alert on what users feel: an error budget, and an alert only when users are affected.
+    '<svg viewBox="0 0 240 110" aria-hidden="true">' +
+      '<path class="pv-grid" d="M18 26H222M18 50H222M18 74H222"/>' +
+      '<path class="pv-threshold" d="M18 34H222"/>' +
+      '<path class="pv-spark" d="M18 70 40 64 60 68 82 58 104 62 126 52 148 56 170 30 192 48 222 44"/>' +
+      '<circle class="pv-alert" cx="170" cy="30" r="5"/>' +
+      '<rect class="pv-budget-bg" x="18" y="88" width="204" height="7" rx="3.5"/><rect class="pv-budget" x="18" y="88" width="140" height="7" rx="3.5"/>' +
+      '<text class="pv-label" x="222" y="22" text-anchor="end">users affected</text>' +
+    '</svg>',
+  ];
   c.principles.forEach(function (p, i) {
+    var viz = el("div", { cls: "principle-viz" });
+    viz.innerHTML = PRINCIPLE_VIZ[i % PRINCIPLE_VIZ.length];
     $("principles").appendChild(el("article", { cls: "principle spot" }, [
+      viz,
       el("span", { cls: "principle-num", text: "0" + (i + 1) }),
       el("h4", { text: p.title }),
       el("p", { text: p.desc }),
@@ -473,7 +531,9 @@
     });
   });
   function layoutHive() {
-    var perRow = matchMedia("(min-width: 1021px)").matches ? 6 : matchMedia("(min-width: 601px)").matches ? 4 : 2;
+    // Up to 6 per row on desktop, but never fewer than needed for a balanced N / N-1 pair (7 badges -> 4 + 3).
+    var perRow = matchMedia("(min-width: 1021px)").matches ? Math.min(6, Math.ceil((badges.length + 1) / 2))
+      : matchMedia("(min-width: 601px)").matches ? 4 : 2;
     hive.style.setProperty("--cols", perRow * 2);
     var row = 0, inRow = 0;
     badges.forEach(function (hex) {
@@ -486,36 +546,149 @@
     });
   }
   layoutHive();
+  // Course completions: shown as learning, separate from exam-based certifications.
+  if (c.learning && c.learning.length) {
+    c.learning.forEach(function (l) {
+      $("learning-list").appendChild(el("li", {}, [
+        el("span", { cls: "learning-issuer", text: l.issuer }),
+        el("span", { text: l.name + (l.year ? " · " + l.year : "") }),
+      ]));
+    });
+    $("learning").hidden = false;
+  }
   ["(min-width: 1021px)", "(min-width: 601px)"].forEach(function (q) { matchMedia(q).addEventListener("change", layoutHive); });
   var key = $("bento-key");
   key.appendChild(roleDots(c.roles.map(function (r) { return r.key; })));
   key.appendChild(document.createTextNode("Where I used it: " + c.roles.map(function (r) { return r.name; }).join(" · ")));
 
-  // ---------- Experience ----------
-  // Roles with `themes` show their work grouped by area of responsibility; others show a list.
-  function pointList(points) {
-    return el("ul", { cls: "tl-points" }, points.map(function (p) { return el("li", { text: p }); }));
+  // ---------- First 90 days ----------
+  var plan = c.first90;
+  $("plan").hidden = !plan || !openMode;
+  // Number the visible sections 01, 02, ... so a hidden section never leaves a gap.
+  document.querySelectorAll(".section:not([hidden]) .label .idx").forEach(function (idx, i) { idx.textContent = (i < 9 ? "0" : "") + (i + 1); });
+  if (plan && openMode) {
+    $("plan-title").textContent = plan.title;
+    $("plan-intro").textContent = plan.intro;
+    plan.phases.forEach(function (ph, i) {
+      $("plan-phases").appendChild(el("li", { cls: "phase" }, [
+        el("span", { cls: "phase-dot" }),
+        el("p", { cls: "phase-when", text: ph.when }),
+        el("span", { cls: "phase-num", text: "0" + (i + 1) }),
+        el("h3", { cls: "phase-title", text: ph.title }),
+        el("ul", { cls: "phase-points" }, ph.points.map(function (p) { return el("li", { text: p }); })),
+      ]));
+    });
   }
-  c.experience.forEach(function (x) {
-    var detail = x.themes
-      ? el("div", { cls: "tl-themes" }, x.themes.map(function (t) {
-          return el("section", { cls: "tl-theme" }, [el("h4", { text: t.title }), pointList(t.points)]);
-        }))
-      : pointList(x.points);
-    var stack = x.stack ? el("ul", { cls: "chips small" }, x.stack.map(function (s) { return el("li", { text: s }); })) : null;
-    $("timeline").appendChild(el("li", { cls: "tl-item" + (x.themes ? " tl-lead" : "") }, [
-      el("div", { cls: "tl-when", text: x.period }),
-      el("div", { cls: "tl-body" }, [
-        el("h3", {}, [
-          el("span", { text: x.role + " · " }),
-          x.url ? el("a", { cls: "tl-company", text: x.company + " ↗", href: x.url }) : el("span", { cls: "tl-company", text: x.company }),
-        ]),
-        x.meta ? el("p", { cls: "tl-meta", text: x.meta }) : null,
-        x.summary ? el("p", { cls: "tl-summary", text: x.summary }) : null,
-        detail, stack,
-      ]),
-    ]));
+
+  // ---------- Experience: a proportional career bar, one role open at a time ----------
+  // Durations come from the periods in content.js (counted inclusively, as LinkedIn does).
+  var MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  function monthOf(text) {
+    if (/present/i.test(text)) { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); }
+    var parts = text.trim().split(/\s+/);
+    return new Date(+parts[1], MONTHS[parts[0].slice(0, 3).toLowerCase()], 1);
+  }
+  function monthsBetween(a, b) { return (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth(); }
+  function durationText(m) {
+    var y = Math.floor(m / 12), mo = m % 12;
+    return [y ? y + (y > 1 ? " yrs" : " yr") : "", mo ? mo + " mo" : ""].filter(Boolean).join(" ");
+  }
+  var THEME_ICONS = [
+    '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z"/></svg>',
+    '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>',
+    '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6l-7-3Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>',
+    '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 12h4l2.5-6 5 12L17 12h4"/></svg>',
+  ];
+  var roles = c.experience.map(function (x, i) {
+    var p = x.period.split(/\s*[–-]\s*/), from = monthOf(p[0]), to = monthOf(p[1] || "Present");
+    return { x: x, i: i, from: from, to: to, months: monthsBetween(from, to) + 1, current: /present/i.test(x.period) };
   });
+  var chrono = roles.slice().reverse();
+  var careerStart = chrono[0].from, careerMonths = monthsBetween(careerStart, chrono[chrono.length - 1].to) + 1;
+  var segs = [], panels = [];
+
+  function pointList(points, cls) {
+    return el("ul", { cls: cls }, points.map(function (p) { return el("li", { text: p }); }));
+  }
+  function openRole(i, focus) {
+    roles.forEach(function (r) {
+      var on = r.i === i;
+      segs[r.i].setAttribute("aria-selected", String(on));
+      segs[r.i].tabIndex = on ? 0 : -1;
+      panels[r.i].hidden = !on;
+    });
+    if (focus) segs[i].focus();
+  }
+
+  chrono.forEach(function (r, k) {
+    var x = r.x;
+    var seg = el("button", { cls: "career-seg" + (r.current ? " is-current" : "") }, [
+      el("span", { cls: "seg-track" }),
+      el("span", { cls: "seg-company", text: x.company.replace(/\s+(Technologies|Inc\.?|B\.V\.|Ltd\.?)$/i, "") }),
+      el("span", { cls: "seg-role", text: x.role.split(",")[0] }),
+      el("span", { cls: "seg-years", text: r.from.getFullYear() + " – " + (r.current ? "now" : r.to.getFullYear()) + " · " + durationText(r.months) }),
+      el("span", { cls: "seg-short", text: "’" + String(r.from.getFullYear()).slice(2) + "–" + (r.current ? "now" : "’" + String(r.to.getFullYear()).slice(2)) }),
+    ]);
+    seg.type = "button";
+    seg.id = "career-tab-" + r.i;
+    seg.style.flexGrow = r.months;
+    seg.setAttribute("role", "tab");
+    seg.setAttribute("aria-controls", "career-panel-" + r.i);
+    seg.addEventListener("click", function () { openRole(r.i); });
+    seg.addEventListener("keydown", function (e) {
+      var n = chrono.length, to = null;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") to = (k + 1) % n;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") to = (k - 1 + n) % n;
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = n - 1;
+      if (to !== null) { e.preventDefault(); openRole(chrono[to].i, true); }
+    });
+    segs[r.i] = seg;
+    $("career-bar").appendChild(seg);
+  });
+
+  // Year ticks under the bar.
+  for (var yr = careerStart.getFullYear() + 1; yr <= new Date().getFullYear(); yr++) {
+    var at = monthsBetween(careerStart, new Date(yr, 0, 1)) / careerMonths * 100;
+    var tick = el("span", { cls: "axis-tick", text: String(yr) });
+    tick.style.left = at + "%";
+    $("career-axis").appendChild(tick);
+  }
+  $("career-axis").appendChild(el("span", { cls: "axis-now", text: "Now" }));
+
+  roles.forEach(function (r) {
+    var x = r.x;
+    var detail = x.themes
+      ? el("div", { cls: "xp-themes" }, x.themes.map(function (t, ti) {
+          var icon = el("span", { cls: "xp-theme-icon" });
+          icon.innerHTML = THEME_ICONS[ti % THEME_ICONS.length];
+          return el("section", { cls: "xp-theme" }, [el("div", { cls: "xp-theme-head" }, [icon, el("h4", { text: t.title })]), pointList(t.points, "xp-list")]);
+        }))
+      : pointList(x.points, "xp-list xp-list-grid");
+    var panel = el("div", { cls: "xp-panel" }, [
+      el("div", { cls: "xp-top" }, [
+        el("div", {}, [
+          el("p", { cls: "xp-company", text: x.company }),
+          el("h3", { cls: "xp-role", text: x.role }),
+          x.meta ? el("p", { cls: "xp-meta", text: x.meta }) : null,
+        ]),
+        el("div", { cls: "xp-when" }, [
+          el("span", { cls: "xp-period", text: x.period }),
+          el("span", { cls: "xp-dur" + (r.current ? " is-current" : ""), text: durationText(r.months) + (r.current ? " · current" : "") }),
+        ]),
+      ]),
+      x.summary ? el("p", { cls: "xp-summary", text: x.summary }) : null,
+      detail,
+      x.stack ? el("ul", { cls: "chips small xp-stack" }, x.stack.map(function (s) { return el("li", { text: s }); })) : null,
+    ]);
+    panel.id = "career-panel-" + r.i;
+    panel.setAttribute("role", "tabpanel");
+    panel.setAttribute("aria-labelledby", "career-tab-" + r.i);
+    panel.tabIndex = 0;
+    panels[r.i] = panel;
+    $("career-panels").appendChild(panel);
+  });
+  openRole(0);
 
   // Recommendations: hidden until at least one is added in content.js.
   if (c.testimonials && c.testimonials.length) {
@@ -532,7 +705,7 @@
   $("copy-email").addEventListener("click", function () { copy(c.email, "Email copied: " + c.email); });
   $("contact-email").href = "mailto:" + c.email;
   $("contact-email").textContent = c.email;
-  $("contact-availability").textContent = c.availability;
+  $("contact-availability").textContent = openMode ? c.availability : c.status;
   c.links.forEach(function (l) {
     var handle = l.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
     var a = el("a", { cls: "channel", href: l.url }, [
@@ -576,7 +749,20 @@
     }, reduceMotion ? 0 : 500);
   });
 
+  // Footer: name and role, page links, the same social links as the hero.
+  $("footer-name").textContent = c.name;
+  $("footer-role").textContent = c.role.split("·")[0].trim();
+  $("footer-location").textContent = c.location;
+  $("footer-social").appendChild(iconLink("Email", "mailto:" + c.email));
+  c.links.forEach(function (l) { $("footer-social").appendChild(iconLink(l.label, l.url)); });
   $("footer-text").textContent = "© " + new Date().getFullYear() + " " + c.name;
+
+  // Rotating edge light on the manifest and the contact form (styles: .edge).
+  document.querySelectorAll(".manifest, .contact-form").forEach(function (box) {
+    var edge = el("span", { cls: "edge" }, [el("i")]);
+    edge.setAttribute("aria-hidden", "true");
+    box.appendChild(edge);
+  });
 
   // ---------- Theme ----------
   var THEMES = { light: "Light", dark: "Dark" };
@@ -642,7 +828,7 @@
     var navIo = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) { if (en.isIntersecting) setActive(en.target.id === "top" ? null : en.target.id); });
     }, { rootMargin: "-45% 0px -50% 0px" });
-    ["top", "about", "work", "experience", "skills", "contact"].forEach(function (id) { navIo.observe($(id)); });
+    ["top", "about", "work", "experience", "skills", "plan", "contact"].forEach(function (id) { navIo.observe($(id)); });
   }
   addEventListener("resize", function () { if (activeId) setActive(activeId); });
 
@@ -665,7 +851,7 @@
     }, { threshold: 0.06, rootMargin: "0px 0px -8% 0px" });
     document.querySelectorAll(".section, .stats").forEach(function (s) {
       s.classList.add("reveal");
-      s.querySelectorAll(".principle, .case-tab, .tl-item, .tile, .hex, .pass, .quote, .stat").forEach(function (ch) { ch.classList.add("stagger"); });
+      s.querySelectorAll(".principle, .case-tab, .career-seg, .tile, .hex, .pass, .quote, .stat, .phase").forEach(function (ch) { ch.classList.add("stagger"); });
       io.observe(s);
     });
   }
@@ -733,9 +919,10 @@
     { group: "Navigate", label: "Experience", run: go("experience") },
     { group: "Navigate", label: "Skills & certifications", run: go("skills") },
     { group: "Navigate", label: "Contact", run: go("contact") },
+  ].concat(openMode && c.first90 ? [{ group: "Navigate", label: "My first 90 days", run: go("plan") }] : []).concat([
     { group: "Actions", label: "Copy email address", hint: c.email, run: function () { copy(c.email, "Email copied: " + c.email); } },
     { group: "Actions", label: "Print this page as a CV", run: function () { setTimeout(function () { window.print(); }, 150); } },
-  ];
+  ]);
   if (c.cv) {
     COMMANDS.splice(COMMANDS.length - 1, 0, { group: "Actions", label: "Download CV (PDF)", run: function () { var a = el("a", { href: c.cv }); a.download = ""; document.body.appendChild(a); a.click(); a.remove(); } });
   }
@@ -872,7 +1059,7 @@
           } else clearTimeout(timers[id]);
         });
       }, { rootMargin: "-40% 0px -40% 0px" });
-      ["about", "work", "experience", "skills", "contact"].forEach(function (id) { readIo.observe($(id)); });
+      ["about", "work", "experience", "skills", "plan", "contact"].forEach(function (id) { readIo.observe($(id)); });
     }
 
     // Time on page milestones (visible time only).
